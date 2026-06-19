@@ -22,7 +22,7 @@ module.exports = {
         NSPhotoLibraryUsageDescription: 'PhasePlate accesses your photo library to log meals.',
         NSHealthShareUsageDescription: 'PhasePlate reads your health data to display steps, calories, and heart rate.',
         NSHealthUpdateUsageDescription: 'PhasePlate writes cycle tracking data to Apple Health.',
-        UIBackgroundModes: ['fetch', 'remote-notification'],
+        UIBackgroundModes: ['fetch'],
       },
       entitlements: {
         'com.apple.developer.healthkit': true,
@@ -72,7 +72,6 @@ module.exports = {
           },
         },
       ],
-      'expo-notifications',
       'expo-task-manager',
       'expo-background-fetch',
     ],
