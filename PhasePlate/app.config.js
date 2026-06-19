@@ -16,6 +16,7 @@ module.exports = {
       supportsTablet: true,
       bundleIdentifier: 'com.coulascreations.phaseplate',
       infoPlist: {
+BGTaskSchedulerPermittedIdentifiers: ['com.coulascreations.phaseplate.background-fetch'],
         NSCameraUsageDescription: 'PhasePlate uses your camera to photograph meals for nutritional analysis.',
         NSPhotoLibraryUsageDescription: 'PhasePlate accesses your photo library to log meals.',
         NSHealthShareUsageDescription: 'PhasePlate reads your health data to display steps, calories, and heart rate.',
