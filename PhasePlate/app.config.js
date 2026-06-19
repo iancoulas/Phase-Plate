@@ -74,11 +74,11 @@ module.exports = {
       'expo-task-manager',
       'expo-background-fetch',
     ],
-    extra: {
+   extra: {
       eas: {
-        projectId: '1e07d8b0-0000-0000-0000-000000000000',
+        projectId: '1e07d8b0-4186-4fa1-8747-4b50d0b536c4',
       },
     },
-    owner: 'iancoulas',
+owner: 'iancoulas',
   },
 };
