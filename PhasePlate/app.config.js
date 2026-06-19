@@ -15,6 +15,7 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.coulascreations.phaseplate',
+ ITSAppUsesNonExemptEncryption: false,
       infoPlist: {
 BGTaskSchedulerPermittedIdentifiers: ['com.coulascreations.phaseplate.background-fetch'],
         NSCameraUsageDescription: 'PhasePlate uses your camera to photograph meals for nutritional analysis.',
