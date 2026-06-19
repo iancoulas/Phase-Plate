@@ -15,9 +15,9 @@ module.exports = {
     ios: {
       supportsTablet: true,
       bundleIdentifier: 'com.coulascreations.phaseplate',
- ITSAppUsesNonExemptEncryption: false,
       infoPlist: {
-BGTaskSchedulerPermittedIdentifiers: ['com.coulascreations.phaseplate.background-fetch'],
+        ITSAppUsesNonExemptEncryption: false,
+        BGTaskSchedulerPermittedIdentifiers: ['com.coulascreations.phaseplate.background-fetch'],
         NSCameraUsageDescription: 'PhasePlate uses your camera to photograph meals for nutritional analysis.',
         NSPhotoLibraryUsageDescription: 'PhasePlate accesses your photo library to log meals.',
         NSHealthShareUsageDescription: 'PhasePlate reads your health data to display steps, calories, and heart rate.',
@@ -76,11 +76,11 @@ BGTaskSchedulerPermittedIdentifiers: ['com.coulascreations.phaseplate.background
       'expo-task-manager',
       'expo-background-fetch',
     ],
-   extra: {
+    extra: {
       eas: {
         projectId: '1e07d8b0-4186-4fa1-8747-4b50d0b536c4',
       },
     },
-owner: 'iancoulas',
+    owner: 'iancoulas',
   },
 };
