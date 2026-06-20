@@ -136,8 +136,8 @@ export default function MenstruationScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView>
-        {/* Phase Card */}
-        {currentPhase && (
+        {/* Phase Card — only shown when we have real cycle data */}
+        {currentPhase && !isDefaultData && (
           <View style={[styles.phaseCard, { backgroundColor: phaseColors.background }]}>
             <View style={styles.phaseHeader}>
               <Text style={[styles.phaseName, { color: phaseColors.text }]}>

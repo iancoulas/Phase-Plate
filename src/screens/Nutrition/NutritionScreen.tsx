@@ -126,9 +126,14 @@ export default function NutritionScreen() {
     setSaving(true);
     const log = await saveFoodLog({ ...editCard, log_date: today });
     setSaving(false);
-    if (log) setLogs(prev => [log, ...prev]);
-    setEditCard(null);
-    setAnalysed(null);
+    if (log) {
+      setLogs(prev => [log, ...prev]);
+      setEditCard(null);
+      setAnalysed(null);
+    } else {
+      setError('Failed to save meal. Please try again.');
+      setEditCard(null);
+    }
   }, [editCard, today]);
 
   const totals = logs.reduce(

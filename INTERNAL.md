@@ -20,6 +20,9 @@
 - [ ] **ngrok paid plan** — dev-client hot-reload without burning EAS builds; set up `ngrok config add-authtoken` then use `ngrok http 8081` + paste URL into Expo Dev Tools
 - [x] **Home plate quadrant UI** — completed 2026-06-20; SVG circular plate with 4 tappable quadrants, Home tab added
 - [x] **Cycle setup prompt** — first-run banner in MenstruationScreen when no cycle data set; taps through to CycleSettings
+- [x] **Nutrition photo logging end-to-end** — camera → GPT-4o → editable card → food_logs → list; save-failure now shows error message; fetchFoodLogsForDate restores across sessions
+- [x] **Barcode scanner** — verified: all 5 stages correct, serving scaler, onLogged callback; no code changes needed
+- [x] **Empty states** — nutrition FlatList empty text ✅; physical connect/loading states ✅; cycle phase card hidden when isDefaultData to prevent misleading default-data display
 - [x] **Period logging end-to-end** — MenstruationScreen fetches month logs from Supabase; actual logged flow days show as red dots overlaid on phase tints; sheet resets on open; calendar refreshes immediately after save
 - [x] **Onboarding cycle seeding** — Step 9 added to OnboardingScreen; collects last period date, cycle length, period length; `handleFinish` saves to `cycle_overrides` in parallel with health profile so CycleContext has real data on first launch
 

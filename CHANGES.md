@@ -1,5 +1,17 @@
 # PhasePlate — Changes Log
 
+## 2026-06-20 — Phase 1.4 / 1.6 / 1.7: Nutrition, barcode, empty states
+
+### Fixed
+- **NutritionScreen save-failure feedback** — if `saveFoodLog` returns null, the edit modal closes and an error message is shown instead of silently disappearing.
+- **MenstruationScreen phase card hidden when no real data** — phase card is now only rendered when `!isDefaultData`. Previously, new users (before setting cycle dates) saw a phase card driven by defaults, which looked authoritative but was inaccurate.
+
+### Verified (no code changes needed)
+- **Barcode scanner flow** — all 5 stages (scanning → looking_up → found → not_found → manual) wired correctly; `scalePer100g` applied to serving size; `onLogged` callback updates Today's Plate list.
+- **Nutrition photo log flow** — camera → GPT-4o → editable card → `saveFoodLog` → prepend to list is fully wired; `fetchFoodLogsForDate` on mount restores data across sessions.
+
+---
+
 ## 2026-06-20 — Phase 1.2: Period logging end-to-end
 
 ### Fixed
