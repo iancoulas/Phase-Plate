@@ -22,17 +22,23 @@ interface Props {
   visible: boolean;
   onClose: () => void;
   onLogged: (log: FoodLog) => void;
+  initialStage?: Stage;
 }
 
-export default function BarcodeScannerModal({ visible, onClose, onLogged }: Props) {
+export default function BarcodeScannerModal({ visible, onClose, onLogged, initialStage = 'scanning' }: Props) {
   const [permission, requestPermission] = useCameraPermissions();
-  const [stage, setStage] = useState<Stage>('scanning');
+  const [stage, setStage] = useState<Stage>(initialStage);
   const [product, setProduct] = useState<NutritionData | null>(null);
   const [serving, setServing] = useState('100');
   const [manual, setManual] = useState({ name: '', calories: '', protein: '', carbs: '', fat: '', fiber: '' });
   const [saving, setSaving] = useState(false);
   const lastScanRef = useRef<string | null>(null);
   const sweepAnim = useRef(new Animated.Value(0)).current;
+
+  // Reset to the correct initial stage each time the modal opens
+  React.useEffect(() => {
+    if (visible) setStage(initialStage);
+  }, [visible]); // eslint-disable-line react-hooks/exhaustive-deps
 
   React.useEffect(() => {
     if (visible && stage === 'scanning') {
@@ -48,7 +54,7 @@ export default function BarcodeScannerModal({ visible, onClose, onLogged }: Prop
 
   function reset() {
     lastScanRef.current = null;
-    setStage('scanning');
+    setStage(initialStage);
     setProduct(null);
     setServing('100');
     setManual({ name: '', calories: '', protein: '', carbs: '', fat: '', fiber: '' });

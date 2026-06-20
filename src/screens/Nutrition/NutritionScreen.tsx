@@ -105,6 +105,7 @@ export default function NutritionScreen() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [manualVisible, setManualVisible] = useState(false);
   const [logsLoading, setLogsLoading] = useState(true);
 
   const loadLogs = useCallback(async () => {
@@ -261,6 +262,9 @@ export default function NutritionScreen() {
         <TouchableOpacity style={styles.fabSecondary} onPress={() => setScannerVisible(true)}>
           <Ionicons name="barcode-outline" size={24} color="#9B59B6" />
         </TouchableOpacity>
+        <TouchableOpacity style={styles.fabSecondary} onPress={() => setManualVisible(true)}>
+          <Ionicons name="pencil-outline" size={22} color="#9B59B6" />
+        </TouchableOpacity>
         <TouchableOpacity style={styles.fab} onPress={openCamera}>
           <Ionicons name="camera" size={26} color="#fff" />
           <Text style={styles.fabText}>Log Meal</Text>
@@ -270,6 +274,12 @@ export default function NutritionScreen() {
       <BarcodeScannerModal
         visible={scannerVisible}
         onClose={() => setScannerVisible(false)}
+        onLogged={log => setLogs(prev => [log, ...prev])}
+      />
+      <BarcodeScannerModal
+        visible={manualVisible}
+        initialStage="manual"
+        onClose={() => setManualVisible(false)}
         onLogged={log => setLogs(prev => [log, ...prev])}
       />
     </SafeAreaView>
