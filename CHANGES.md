@@ -1,5 +1,24 @@
 # PhasePlate — Changes Log
 
+## 2026-06-20 — Phase 1 pre-alpha work
+
+### New
+- **Home plate quadrant UI** (`src/screens/Home/HomeScreen.tsx`) — circular SVG donut plate with 4 tappable quadrants (Cycle `#8B3A5A`, Nutrition `#6B5A2D`, Physical `#2D4A6B`, Profile `#9B59B6`). Each tap navigates to the corresponding tab. Header shows time-of-day greeting and current cycle phase badge. Uses `react-native-svg` Path elements with icon/label overlays absolutely positioned over the SVG.
+- **Home tab added to TabNavigator** — Home is now the first (default) tab; existing 4 tabs remain unchanged
+- **`isDefaultData` flag in CycleContext** — true when no cycle override or logged period data was found; used to prompt first-time users to set their cycle dates
+- **Cycle setup prompt in MenstruationScreen** — rose-coloured banner appears when `isDefaultData` is true; tapping navigates to Profile → CycleSettings
+
+### Updated
+- **NutritionScreen daily totals** — expanded from calories-only to a full macro summary card showing calories + protein / carbs / fat breakdown
+- **`ProfileStackNavigator`** — `OnboardingScreen` now wrapped in `OnboardingWithBack` so it receives `onComplete={() => navigation.goBack()}` when reached via Profile stack (fixes TS prop mismatch)
+- **`NotificationService`** — updated `setNotificationHandler` for SDK 53: added `shouldShowBanner` and `shouldShowList` fields (renamed from `shouldShowAlert` in SDK 52)
+- **`SubscriptionContext`** — `purchase` interface type changed from `(packageId: string)` to `(pkg: unknown)` to match implementation and PaywallScreen usage
+
+### TypeScript
+- All TS errors cleared (0 errors after fixes above)
+
+---
+
 ## 2026-06-20 — Onboarding fix + TestFlight build 21
 
 ### Bug fix

@@ -18,7 +18,7 @@ interface SubscriptionContextValue {
   loading: boolean;
   offering: unknown;
   refresh: () => Promise<void>;
-  purchase: (packageId: string) => Promise<boolean>;
+  purchase: (pkg: unknown) => Promise<boolean>;
   restore: () => Promise<void>;
   isFeatureUnlocked: (feature: Feature) => boolean;
   tierForFeature: (feature: Feature) => SubscriptionTier;

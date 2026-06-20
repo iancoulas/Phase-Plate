@@ -16,6 +16,7 @@ import Calendar from 'react-native-calendars/src/calendar';
 import type { DateData } from 'react-native-calendars/src/types';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useNavigation } from '@react-navigation/native';
 import { calculateCyclePhase, CyclePhase } from '../../utils/cycleCalculator';
 import { generateMarkedDates, PHASE_COLORS } from '../../utils/cycleCalendar';
 import { saveLog, FlowLevel, Mood } from '../../services/supabase';
@@ -45,7 +46,8 @@ const FLOW_OPTIONS: { value: FlowLevel; label: string }[] = [
 ];
 
 export default function MenstruationScreen() {
-  const { lastPeriodDate, cycleLength, periodLength } = useCycle();
+  const navigation = useNavigation<any>();
+  const { lastPeriodDate, cycleLength, periodLength, isDefaultData } = useCycle();
   const now = new Date();
   const [viewedMonth, setViewedMonth] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
   const [sheetVisible, setSheetVisible] = useState(false);
@@ -124,6 +126,19 @@ export default function MenstruationScreen() {
                 : `${currentPhase.daysUntilNextPhase} day${currentPhase.daysUntilNextPhase !== 1 ? 's' : ''} until next phase`}
             </Text>
           </View>
+        )}
+
+        {/* First-run setup prompt */}
+        {isDefaultData && (
+          <TouchableOpacity
+            style={styles.setupBanner}
+            onPress={() => navigation.navigate('Profile', { screen: 'CycleSettings' })}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="calendar-outline" size={18} color="#8B3A5A" />
+            <Text style={styles.setupBannerText}>Set your last period date for accurate phase predictions</Text>
+            <Ionicons name="chevron-forward" size={16} color="#8B3A5A" />
+          </TouchableOpacity>
         )}
 
         {/* Phase Legend */}
@@ -235,6 +250,8 @@ export default function MenstruationScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f8f8' },
+  setupBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, marginBottom: 0, backgroundColor: '#FDF0F4', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#EDD5DF' },
+  setupBannerText: { flex: 1, fontSize: 13, color: '#8B3A5A', fontWeight: '500' },
   phaseCard: { margin: 16, borderRadius: 16, padding: 20 },
   phaseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   phaseName: { fontSize: 22, fontWeight: '700' },

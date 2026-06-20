@@ -6,6 +6,7 @@ interface CycleState {
   cycleLength: number;
   periodLength: number;
   loading: boolean;
+  isDefaultData: boolean; // true when no override or logged period data was found
 }
 
 interface CycleContextValue extends CycleState {
@@ -18,10 +19,12 @@ const DEFAULT_STATE: CycleState = {
   cycleLength: 28,
   periodLength: 5,
   loading: true,
+  isDefaultData: true,
 };
 
 const CycleContext = createContext<CycleContextValue>({
   ...DEFAULT_STATE,
+  loading: false,
   updateCycleSettings: async () => {},
   refresh: async () => {},
 });
@@ -39,6 +42,7 @@ export function CycleProvider({ children }: { children: React.ReactNode }) {
           cycleLength: override.cycle_length,
           periodLength: override.period_length,
           loading: false,
+          isDefaultData: false,
         });
         return;
       }
@@ -56,9 +60,10 @@ export function CycleProvider({ children }: { children: React.ReactNode }) {
           cycleLength: 28,
           periodLength: 5,
           loading: false,
+          isDefaultData: false,
         });
       } else {
-        setState(s => ({ ...s, loading: false }));
+        setState(s => ({ ...s, loading: false, isDefaultData: true }));
       }
     } catch (err) {
       console.warn('[CycleContext] load error:', err);
@@ -75,6 +80,7 @@ export function CycleProvider({ children }: { children: React.ReactNode }) {
       cycleLength: override.cycle_length,
       periodLength: override.period_length,
       loading: false,
+      isDefaultData: false,
     });
   }, []);
 

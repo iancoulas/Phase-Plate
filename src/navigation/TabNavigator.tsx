@@ -2,6 +2,7 @@ import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
+import HomeScreen from '../screens/Home/HomeScreen';
 import MenstruationScreen from '../screens/Menstruation/MenstruationScreen';
 import NutritionScreen from '../screens/Nutrition/NutritionScreen';
 import PhysicalScreen from '../screens/Physical/PhysicalScreen';
@@ -13,10 +14,11 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
 
 const TAB_ICONS: Record<keyof RootTabParamList, { active: IoniconsName; inactive: IoniconsName }> = {
-  Menstruation: { active: 'calendar', inactive: 'calendar-outline' },
-  Nutrition: { active: 'nutrition', inactive: 'nutrition-outline' },
-  Physical: { active: 'body', inactive: 'body-outline' },
-  Profile: { active: 'person', inactive: 'person-outline' },
+  Home:         { active: 'apps',             inactive: 'apps-outline' },
+  Menstruation: { active: 'calendar',         inactive: 'calendar-outline' },
+  Nutrition:    { active: 'nutrition',        inactive: 'nutrition-outline' },
+  Physical:     { active: 'body',             inactive: 'body-outline' },
+  Profile:      { active: 'person',           inactive: 'person-outline' },
 };
 
 export default function TabNavigator() {
@@ -33,10 +35,11 @@ export default function TabNavigator() {
         },
       })}
     >
-      <Tab.Screen name="Menstruation" component={MenstruationScreen} options={{ title: 'Cycle' }} />
-      <Tab.Screen name="Nutrition" component={NutritionScreen} options={{ title: 'Nutrition' }} />
-      <Tab.Screen name="Physical" component={PhysicalScreen} options={{ title: 'Physical' }} />
-      <Tab.Screen name="Profile" component={ProfileStackNavigator} options={{ title: 'Profile' }} />
+      <Tab.Screen name="Home"         component={HomeScreen}           options={{ title: 'Home' }} />
+      <Tab.Screen name="Menstruation" component={MenstruationScreen}   options={{ title: 'Cycle' }} />
+      <Tab.Screen name="Nutrition"    component={NutritionScreen}      options={{ title: 'Nutrition' }} />
+      <Tab.Screen name="Physical"     component={PhysicalScreen}       options={{ title: 'Physical' }} />
+      <Tab.Screen name="Profile"      component={ProfileStackNavigator} options={{ title: 'Profile' }} />
     </Tab.Navigator>
   );
 }

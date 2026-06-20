@@ -1,6 +1,7 @@
 export type { MenstruationLog, FlowLevel, Mood, FoodLog, NotificationSettings } from '../services/supabase';
 
 export type RootTabParamList = {
+  Home: undefined;
   Menstruation: undefined;
   Nutrition: undefined;
   Physical: undefined;

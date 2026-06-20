@@ -18,6 +18,8 @@
 - [ ] **Replace placeholder icons** — assets/icon.png etc. are solid-colour placeholder PNGs; replace with real branded artwork before public App Store launch
 - [ ] **Google Cloud Fitness API** — was sunset 2025-06-30; Android health data broken until Health Connect migration
 - [ ] **ngrok paid plan** — dev-client hot-reload without burning EAS builds; set up `ngrok config add-authtoken` then use `ngrok http 8081` + paste URL into Expo Dev Tools
+- [x] **Home plate quadrant UI** — completed 2026-06-20; SVG circular plate with 4 tappable quadrants, Home tab added
+- [x] **Cycle setup prompt** — first-run banner in MenstruationScreen when no cycle data set; taps through to CycleSettings
 
 ---
 
@@ -54,6 +56,9 @@
 | 2026-06-20 | Apple rejects submission: "Something went wrong" | Two causes: (1) expo-notifications plugin adds aps-environment:production entitlement but provisioning profile lacks Push Notifications capability. Fix: remove expo-notifications from plugins + remove remote-notification from UIBackgroundModes. (2) EAS default Xcode is pre-SDK-26; Apple requires Xcode 26+. Fix: set image in eas.json |
 | 2026-06-20 | image:"latest" in eas.json → build errors in 2 min | "latest" resolves to macos-tahoe-26.4-xcode-26.4 which has native module compilation incompatibilities with SDK 53. Use macos-sequoia-15.6-xcode-26.0 instead |
 | 2026-06-20 | Onboarding Finish button saves but doesn't close screen | OnboardingScreen called navigation.goBack() but is not on a nav stack — rendered conditionally by App.tsx. Fix: add onComplete prop, App.tsx passes () => setShowOnboarding(false) |
+| 2026-06-20 | TS: OnboardingScreen `onComplete` required but ProfileStackNavigator can't pass it | OnboardingScreen has required prop; nav screens can't receive component props. Fix: wrap in `OnboardingWithBack` component that calls `navigation.goBack()` |
+| 2026-06-20 | TS: NotificationService SDK 53 `NotificationBehavior` missing fields | SDK 53 renamed `shouldShowAlert` to `shouldShowBanner` + `shouldShowList`. Fixed both fields. |
+| 2026-06-20 | TS: `FoodLog` has no `created_at` field | Used as FlatList key extractor — dropped `created_at` fallback, use `id` or random string only |
 
 ---
 
@@ -77,6 +82,8 @@
 | Use macos-sequoia-15.6-xcode-26.0 EAS image | Satisfies Apple's iOS SDK 26 requirement; earlier than macos-tahoe which breaks SDK 53 native modules | macos-tahoe-26.4-xcode-26.4 (breaks), no image (pre-SDK-26, Apple rejects) |
 | Remove expo-notifications from plugins | App uses local notifications only; plugin adds push entitlement that mismatches provisioning profile | Add push capability to profile (unnecessary complexity) |
 | registerRootComponent + index.js entry | App uses @react-navigation, not file-based routing; expo-router/entry crashes with no app/ dir | Migrate to expo-router file routing (large refactor) |
+| SVG plate with absolute-positioned overlay (not SVG Text/ForeignObject) | Ionicons can't render inside SVG in React Native; absolute-positioned Views over the SVG canvas is the standard workaround | Emoji-only SVG text (no branded icons) |
+| `isDefaultData` flag on CycleContext (not a separate Supabase call) | Cheapest way to detect first-run state without extra round trips | Separate `hasSetCycleData` field in user_preferences |
 
 ---
 

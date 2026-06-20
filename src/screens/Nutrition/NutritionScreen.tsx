@@ -131,7 +131,15 @@ export default function NutritionScreen() {
     setAnalysed(null);
   }, [editCard, today]);
 
-  const totalCalories = logs.reduce((s, l) => s + (l.calories ?? 0), 0);
+  const totals = logs.reduce(
+    (acc, l) => ({
+      calories: acc.calories + (l.calories ?? 0),
+      protein:  acc.protein  + (l.protein_g ?? 0),
+      carbs:    acc.carbs    + (l.carbs_g ?? 0),
+      fat:      acc.fat      + (l.fat_g ?? 0),
+    }),
+    { calories: 0, protein: 0, carbs: 0, fat: 0 }
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -140,10 +148,24 @@ export default function NutritionScreen() {
 
       {error && <Text style={styles.errorText}>{error}</Text>}
 
-      {/* Calorie total */}
+      {/* Daily nutrition summary */}
       <View style={styles.totalCard}>
-        <Text style={styles.totalLabel}>Calories logged</Text>
-        <Text style={styles.totalValue}>{Math.round(totalCalories)}</Text>
+        <View style={styles.totalCalRow}>
+          <Text style={styles.totalLabel}>Calories</Text>
+          <Text style={styles.totalValue}>{Math.round(totals.calories)}</Text>
+        </View>
+        <View style={styles.macroRow}>
+          {([
+            { label: 'Protein', value: totals.protein, color: '#E74C3C' },
+            { label: 'Carbs',   value: totals.carbs,   color: '#F39C12' },
+            { label: 'Fat',     value: totals.fat,     color: '#2ECC71' },
+          ] as const).map(m => (
+            <View key={m.label} style={styles.macroItem}>
+              <Text style={[styles.macroValue, { color: m.color }]}>{Math.round(m.value)}g</Text>
+              <Text style={styles.macroLabel}>{m.label}</Text>
+            </View>
+          ))}
+        </View>
       </View>
 
       {analysing && <PulsingLoader />}
@@ -180,7 +202,7 @@ export default function NutritionScreen() {
       {/* Log list */}
       <FlatList
         data={logs}
-        keyExtractor={item => item.id ?? item.created_at ?? Math.random().toString()}
+        keyExtractor={item => item.id ?? Math.random().toString()}
         renderItem={({ item }) => (
           <View style={styles.logRow}>
             <View style={styles.logInfo}>
@@ -220,9 +242,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f8f8' },
   heading: { fontSize: 28, fontWeight: '700', paddingHorizontal: 16, paddingTop: 8 },
   subheading: { fontSize: 14, color: '#888', paddingHorizontal: 16, marginBottom: 12 },
-  totalCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: '#fff', borderRadius: 12, padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  totalCard: { marginHorizontal: 16, marginBottom: 12, backgroundColor: '#fff', borderRadius: 12, padding: 16 },
+  totalCalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
   totalLabel: { fontSize: 15, color: '#666' },
   totalValue: { fontSize: 28, fontWeight: '700', color: '#E74C3C' },
+  macroRow: { flexDirection: 'row', justifyContent: 'space-around', borderTopWidth: 1, borderTopColor: '#f0f0f0', paddingTop: 12 },
+  macroItem: { alignItems: 'center', gap: 2 },
+  macroValue: { fontSize: 17, fontWeight: '700' },
+  macroLabel: { fontSize: 11, color: '#aaa', fontWeight: '500' },
   errorText: { color: '#E74C3C', paddingHorizontal: 16, marginBottom: 8, fontSize: 13 },
   loaderContainer: { alignItems: 'center', paddingVertical: 24 },
   loaderIcon: { fontSize: 48 },
