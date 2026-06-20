@@ -12,9 +12,8 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation } from '@react-navigation/native';
 
-import { saveOnboardingProfile, fetchOnboardingProfile } from '../../services/supabase';
+import { saveOnboardingProfile } from '../../services/supabase';
 import { OnboardingProfile } from './types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -44,8 +43,7 @@ function Chip({ label, selected, onPress }: { label: string; selected: boolean; 
   );
 }
 
-export default function OnboardingScreen() {
-  const navigation = useNavigation();
+export default function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<OnboardingProfile>(BLANK);
   const [saving, setSaving] = useState(false);
@@ -81,8 +79,8 @@ export default function OnboardingScreen() {
     setSaving(true);
     await saveOnboardingProfile(profile as unknown as Record<string, unknown>);
     setSaving(false);
-    navigation.goBack();
-  }, [profile, navigation]);
+    onComplete();
+  }, [profile, onComplete]);
 
   function setField<K extends keyof OnboardingProfile>(key: K, value: OnboardingProfile[K]) {
     setProfile(p => ({ ...p, [key]: value }));

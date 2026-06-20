@@ -38,7 +38,7 @@ export default function App() {
           <CycleProvider>
             <NavigationContainer>
               {showOnboarding ? (
-                <OnboardingScreen />
+                <OnboardingScreen onComplete={() => setShowOnboarding(false)} />
               ) : (
                 <TabNavigator />
               )}
