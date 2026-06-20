@@ -13,11 +13,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { saveOnboardingProfile } from '../../services/supabase';
+import { saveOnboardingProfile, saveCycleOverride } from '../../services/supabase';
 import { OnboardingProfile } from './types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 9;
 
 const BLANK: OnboardingProfile = {
   contraception: null,
@@ -49,6 +49,15 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
   const [saving, setSaving] = useState(false);
   const slideAnim = useRef(new Animated.Value(0)).current;
 
+  // Step 8 — cycle seed data (saved to cycle_overrides, not onboarding_profile)
+  const [lpDate, setLpDate] = useState(() => new Date(Date.now() - 14 * 24 * 60 * 60 * 1000));
+  const [cLen, setCLen] = useState(28);
+  const [pLen, setPLen] = useState(5);
+
+  function adjustLpDate(delta: number) {
+    setLpDate(d => { const n = new Date(d); n.setDate(n.getDate() + delta); return n; });
+  }
+
   const goTo = useCallback((next: number) => {
     const dir = next > step ? -1 : 1;
     Animated.sequence([
@@ -71,16 +80,24 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
       case 5: return true;
       case 6: return profile.workType !== null;
       case 7: return profile.goals.length > 0;
+      case 8: return true; // defaults are always valid
       default: return false;
     }
   }, [step, profile]);
 
   const handleFinish = useCallback(async () => {
     setSaving(true);
-    await saveOnboardingProfile(profile as unknown as Record<string, unknown>);
+    await Promise.all([
+      saveOnboardingProfile(profile as unknown as Record<string, unknown>),
+      saveCycleOverride({
+        last_period_date: lpDate.toISOString().split('T')[0],
+        cycle_length: cLen,
+        period_length: pLen,
+      }),
+    ]);
     setSaving(false);
     onComplete();
-  }, [profile, onComplete]);
+  }, [profile, lpDate, cLen, pLen, onComplete]);
 
   function setField<K extends keyof OnboardingProfile>(key: K, value: OnboardingProfile[K]) {
     setProfile(p => ({ ...p, [key]: value }));
@@ -263,6 +280,39 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
             </View>
           </View>
         );
+      case 8:
+        return (
+          <View>
+            <Text style={styles.stepTitle}>Your Cycle</Text>
+            <Text style={styles.stepSub}>Help us get your calendar ready from day one.</Text>
+            <View style={styles.cycleCard}>
+              <View style={styles.cycleRow}>
+                <Text style={styles.cycleLabel}>Last period started</Text>
+                <View style={styles.stepperControl}>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => adjustLpDate(-1)}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <Text style={styles.stepValue}>{lpDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</Text>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => adjustLpDate(1)}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                </View>
+              </View>
+              <View style={styles.cycleRow}>
+                <Text style={styles.cycleLabel}>Cycle length (days)</Text>
+                <View style={styles.stepperControl}>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => setCLen(n => Math.max(21, n - 1))}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <Text style={styles.stepValue}>{cLen}</Text>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => setCLen(n => Math.min(45, n + 1))}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                </View>
+              </View>
+              <View style={[styles.cycleRow, { borderBottomWidth: 0 }]}>
+                <Text style={styles.cycleLabel}>Period length (days)</Text>
+                <View style={styles.stepperControl}>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => setPLen(n => Math.max(1, n - 1))}><Text style={styles.stepBtnText}>−</Text></TouchableOpacity>
+                  <Text style={styles.stepValue}>{pLen}</Text>
+                  <TouchableOpacity style={styles.stepBtn} onPress={() => setPLen(n => Math.min(10, n + 1))}><Text style={styles.stepBtnText}>+</Text></TouchableOpacity>
+                </View>
+              </View>
+            </View>
+          </View>
+        );
       default:
         return null;
     }
@@ -322,4 +372,11 @@ const styles = StyleSheet.create({
   nextBtn: { flex: 2, backgroundColor: '#9B59B6', borderRadius: 12, paddingVertical: 14, alignItems: 'center' },
   nextBtnDisabled: { opacity: 0.4 },
   nextBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  cycleCard: { backgroundColor: '#fafafa', borderRadius: 14, borderWidth: 1, borderColor: '#eee', padding: 8 },
+  cycleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 8, borderBottomWidth: 1, borderBottomColor: '#f0f0f0' },
+  cycleLabel: { fontSize: 15, color: '#1a1a1a', flex: 1 },
+  stepperControl: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  stepBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#EDE7F6', justifyContent: 'center', alignItems: 'center' },
+  stepBtnText: { fontSize: 20, color: '#9B59B6', fontWeight: '600', lineHeight: 24 },
+  stepValue: { fontSize: 14, fontWeight: '600', color: '#1a1a1a', minWidth: 90, textAlign: 'center' },
 });

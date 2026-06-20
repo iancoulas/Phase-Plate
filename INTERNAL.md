@@ -20,6 +20,7 @@
 - [ ] **ngrok paid plan** — dev-client hot-reload without burning EAS builds; set up `ngrok config add-authtoken` then use `ngrok http 8081` + paste URL into Expo Dev Tools
 - [x] **Home plate quadrant UI** — completed 2026-06-20; SVG circular plate with 4 tappable quadrants, Home tab added
 - [x] **Cycle setup prompt** — first-run banner in MenstruationScreen when no cycle data set; taps through to CycleSettings
+- [x] **Onboarding cycle seeding** — Step 9 added to OnboardingScreen; collects last period date, cycle length, period length; `handleFinish` saves to `cycle_overrides` in parallel with health profile so CycleContext has real data on first launch
 
 ---
 

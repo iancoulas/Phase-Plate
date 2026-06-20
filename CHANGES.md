@@ -1,5 +1,12 @@
 # PhasePlate — Changes Log
 
+## 2026-06-20 — Phase 1.3: Onboarding cycle seeding
+
+### New
+- **Onboarding step 9 — "Your Cycle"** (`src/screens/Onboarding/OnboardingScreen.tsx`) — added as the final onboarding step; stepper UI for last period date, cycle length (21–45 days), period length (1–10 days). On Finish, saves to `cycle_overrides` in parallel with the health profile so `CycleContext` has real data from the very first launch. Eliminates the empty-calendar first-run state.
+
+---
+
 ## 2026-06-20 — Phase 1 pre-alpha work
 
 ### New
