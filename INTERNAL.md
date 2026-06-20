@@ -7,9 +7,9 @@
 ## 1. Active TODOs
 
 - [ ] **Dev client rebuild** — after the SDK 53 upgrade (react-native 0.76→0.79, expo-router 4→5), any existing dev client build is stale. Rebuild with `eas build --profile development` before doing local development
-- [ ] **Supabase RLS** — anonymous auth must be enabled in Supabase dashboard (Authentication → Providers → Anonymous Sign-Ins → Enable)
-- [ ] **user_preferences table** — provision via the DDL in supabase.ts (or the schema block in INTERNAL.md §6)
-- [ ] **cycle_overrides table** — provision via DDL in supabase.ts
+- [x] **Supabase RLS** — anonymous auth confirmed enabled (probed 2026-06-20)
+- [x] **user_preferences table** — confirmed exists (probed 2026-06-20)
+- [x] **cycle_overrides table** — created and confirmed 2026-06-20 (DDL in supabase_setup.sql)
 - [ ] **OpenAI key exposure** — currently EXPO_PUBLIC_* (ships in bundle). Move to Supabase Edge Function before App Store release
 - [ ] **RevenueCat dashboard config** — products, entitlements ("plus", "premium"), offerings not yet created
 - [ ] **PaywallScreen not wired into nav** — no entry point yet; has onClose prop ready for modal presentation

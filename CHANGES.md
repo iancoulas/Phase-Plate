@@ -1,5 +1,12 @@
 # PhasePlate — Changes Log
 
+## 2026-06-20 — Manual food entry FAB
+
+### New
+- **Direct manual entry button** (`NutritionScreen.tsx`, `BarcodeScannerModal.tsx`) — pencil icon FAB added between the barcode and camera buttons; opens the manual entry form immediately without going through the barcode scanner flow. Added `initialStage` prop to `BarcodeScannerModal` so it can open at any stage; resets correctly on each open.
+
+---
+
 ## 2026-06-20 — Phase 2: Alpha polish
 
 ### New
