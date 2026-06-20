@@ -1,5 +1,42 @@
 # PhasePlate — Changes Log
 
+## 2026-06-20 — First successful TestFlight submission
+
+### EAS build chain fully fixed
+
+**Root cause (found and resolved):** `expo@53.0.27` was installed but all companion packages were still at SDK 52 versions (`react@18`, `react-native@0.76.7`, `expo-router@4.x`). This held `metro` at `0.81.5` when SDK 53 requires `^0.82.0`, killing every EAS build within 78 seconds.
+
+**SDK 53 full upgrade** (commit `20c9679`)
+- `react` 18.3.1 → 19.0.0
+- `react-native` 0.76.7 → 0.79.6
+- `expo-router` 4.0.22 → ~5.1.11
+- `metro` now at 0.82.5 (pulled by react-native@0.79.6)
+- 12 other expo-\* packages realigned: async-storage, background-fetch, camera, constants, image-picker, linking, notifications, splash-screen, status-bar, task-manager, reanimated, svg
+- `@types/react` updated to ~19.0.10, moved from dependencies to devDependencies
+- `typescript` pinned to ~5.8.3 in devDependencies
+- Removed `@types/react-native` (now bundled with react-native)
+- Added `expo.doctor.reactNativeDirectoryCheck.exclude` in package.json to suppress known-acceptable warnings
+
+**Entry point fix** (commit `20c9679`)
+- Created `index.js` with `registerRootComponent(App)`
+- Changed `"main"` in package.json from `"expo-router/entry"` to `"index.js"`
+- App uses `@react-navigation` directly — no `app/` directory exists; expo-router as entry point would crash on launch
+
+**Push notification entitlement fix** (commit `2852ea4`)
+- Removed `'expo-notifications'` from plugins in `app.config.js`
+- Removed `'remote-notification'` from `UIBackgroundModes` (kept `'fetch'`)
+- App uses local scheduled notifications only (no server push). The `expo-notifications` plugin adds `aps-environment: production` to the binary, which Apple rejects if the provisioning profile doesn't have Push Notifications enabled
+
+**iOS SDK 26 compliance** (commits `a632459`, `96091a1`)
+- Apple now requires all submissions to be built with iOS SDK 26 (Xcode 26) or later
+- Set `"image": "macos-sequoia-15.6-xcode-26.0"` in `eas.json` under `build.production.ios`
+- Note: `"latest"` resolves to Xcode 26.4 on macOS Tahoe which has compilation incompatibilities with SDK 53 native modules — use `macos-sequoia-15.6-xcode-26.0` specifically
+- Set `ascAppId: "6781960320"` in `eas.json` under `submit.production.ios`
+
+**Build 20 submitted successfully to TestFlight** — version 1.0.0 (build 20), processed by Apple, available in TestFlight at https://appstoreconnect.apple.com/apps/6781960320/testflight/ios
+
+---
+
 ## 2026-06-19 — Full codebase reconstruction (Phases 1–24)
 
 ### Reconstructed from session notes

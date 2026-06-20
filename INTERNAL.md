@@ -6,15 +6,16 @@
 
 ## 1. Active TODOs
 
-- [ ] **Native rebuild required** — expo-camera, expo-notifications, react-native-purchases, react-native-health all need a dev-client rebuild after install
+- [ ] **Dev client rebuild** — after the SDK 53 upgrade (react-native 0.76→0.79, expo-router 4→5), any existing dev client build is stale. Rebuild with `eas build --profile development` before doing local development
 - [ ] **Supabase RLS** — anonymous auth must be enabled in Supabase dashboard (Authentication → Providers → Anonymous Sign-Ins → Enable)
 - [ ] **user_preferences table** — provision via the DDL in supabase.ts (or the schema block in INTERNAL.md §6)
 - [ ] **cycle_overrides table** — provision via DDL in supabase.ts
 - [ ] **OpenAI key exposure** — currently EXPO_PUBLIC_* (ships in bundle). Move to Supabase Edge Function before App Store release
 - [ ] **RevenueCat dashboard config** — products, entitlements ("plus", "premium"), offerings not yet created
 - [ ] **PaywallScreen not wired into nav** — no entry point yet; has onClose prop ready for modal presentation
-- [ ] **First-run onboarding** — App.tsx now handles this via fetchOnboardingProfile(); verify works on clean install
-- [ ] **HealthKit entitlement** — needs Apple Developer → Identifiers → Health entitlement enabled for bundle ID
+- [ ] **First-run onboarding** — App.tsx handles via fetchOnboardingProfile(); verify works on clean install
+- [ ] **HealthKit entitlement** — needs Apple Developer → Identifiers → Health entitlement enabled for bundle ID (separate from code — must be done in the portal)
+- [ ] **Replace placeholder icons** — assets/icon.png etc. are solid-colour placeholder PNGs; replace with real branded artwork before public App Store launch
 - [ ] **Google Cloud Fitness API** — was sunset 2025-06-30; Android health data broken until Health Connect migration
 - [ ] **ngrok paid plan** — dev-client hot-reload without burning EAS builds; set up `ngrok config add-authtoken` then use `ngrok http 8081` + paste URL into Expo Dev Tools
 
@@ -48,6 +49,10 @@
 | Phase 23 | expo start --tunnel unreliable via @expo/ngrok v2 | Use paid ngrok v3 with separate tunnel + manual URL |
 | Phase 23 | Free EAS iOS builds exhausted in one day | One per project; use preview profile sparingly |
 | Phase 23 | OpenAI photo-analysis error (exact message TBC) | Deferred — needs device reproduction |
+| 2026-06-20 | EAS builds failing at ~78 seconds (all builds) | SDK mismatch: expo@53 installed but companion packages (react, react-native, expo-router) still at SDK 52. metro held at 0.81.5 by react-native@0.76.7. Fix: run `npx expo install` to align all packages with installed SDK version |
+| 2026-06-20 | `"main": "expo-router/entry"` in package.json but no app/ directory | App uses @react-navigation, not expo-router file routing. Fix: create index.js with registerRootComponent, change "main" to "index.js" |
+| 2026-06-20 | Apple rejects submission: "Something went wrong" | Two causes: (1) expo-notifications plugin adds aps-environment:production entitlement but provisioning profile lacks Push Notifications capability. Fix: remove expo-notifications from plugins + remove remote-notification from UIBackgroundModes. (2) EAS default Xcode is pre-SDK-26; Apple requires Xcode 26+. Fix: set image in eas.json |
+| 2026-06-20 | image:"latest" in eas.json → build errors in 2 min | "latest" resolves to macos-tahoe-26.4-xcode-26.4 which has native module compilation incompatibilities with SDK 53. Use macos-sequoia-15.6-xcode-26.0 instead |
 
 ---
 
@@ -68,6 +73,9 @@
 | DEFAULT auth.uid() on user_id columns | Client code doesn't need to set it; RLS still enforced | Explicit user_id in every insert |
 | Hand-rolled step-config in OnboardingScreen | Fewer files; config is simple and unlikely to change | Separate config file |
 | Single bundled commit approach | Avoids churn for tightly coupled phases | Many small commits |
+| Use macos-sequoia-15.6-xcode-26.0 EAS image | Satisfies Apple's iOS SDK 26 requirement; earlier than macos-tahoe which breaks SDK 53 native modules | macos-tahoe-26.4-xcode-26.4 (breaks), no image (pre-SDK-26, Apple rejects) |
+| Remove expo-notifications from plugins | App uses local notifications only; plugin adds push entitlement that mismatches provisioning profile | Add push capability to profile (unnecessary complexity) |
+| registerRootComponent + index.js entry | App uses @react-navigation, not file-based routing; expo-router/entry crashes with no app/ dir | Migrate to expo-router file routing (large refactor) |
 
 ---
 
@@ -100,8 +108,8 @@
 
 ### Apple Developer ($99/yr)
 - Bundle ID: `com.coulascreations.phaseplate`
-- HealthKit entitlement: Identifiers → phaseplate → Health → enable
-- Push notifications entitlement
+- HealthKit entitlement: Identifiers → phaseplate → Health → enable (required for react-native-health to work at runtime)
+- **Do NOT enable Push Notifications** — app uses local notifications only; enabling it would require a provisioning profile re-issue and is unnecessary
 - Distribution cert + provisioning profiles (EAS manages automatically)
 
 ### Google Play ($25 one-time)
