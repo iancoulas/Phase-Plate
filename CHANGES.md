@@ -1,5 +1,14 @@
 # PhasePlate — Changes Log
 
+## 2026-06-20 — Phase 1.2: Period logging end-to-end
+
+### Fixed
+- **Logged period dots on calendar** (`src/screens/Menstruation/MenstruationScreen.tsx`) — `fetchLogsForMonth` now called on mount and on every month navigation; days with `flow_level !== 'none'` are overlaid as red dots on the calendar, on top of the phase-tint background. Previously only *estimated* menstrual phase days showed dots; actual logged days were invisible after a session restart.
+- **Log sheet state reset** — `openSheet` now resets cramp/mood/flow/notes to defaults each time it opens, so stale values from a previous entry no longer carry over to a new date.
+- **Calendar refreshes after save** — `handleSave` calls `loadMonthLogs` after a successful Supabase write so the new dot appears immediately without needing to navigate away.
+
+---
+
 ## 2026-06-20 — Phase 1.3: Onboarding cycle seeding
 
 ### New

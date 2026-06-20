@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   Animated,
   KeyboardAvoidingView,
@@ -19,7 +19,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { calculateCyclePhase, CyclePhase } from '../../utils/cycleCalculator';
 import { generateMarkedDates, PHASE_COLORS } from '../../utils/cycleCalendar';
-import { saveLog, FlowLevel, Mood } from '../../services/supabase';
+import { saveLog, fetchLogsForMonth, MenstruationLog, FlowLevel, Mood } from '../../services/supabase';
 import { useCycle } from '../../contexts/CycleContext';
 
 const PHASE_LABELS: Record<CyclePhase, string> = {
@@ -58,9 +58,23 @@ export default function MenstruationScreen() {
   const [notes, setNotes] = useState('');
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [monthLogs, setMonthLogs] = useState<MenstruationLog[]>([]);
   const slideAnim = useRef(new Animated.Value(300)).current;
 
   const cycleParams = { lastPeriodDate, cycleLength, periodLength };
+
+  const loadMonthLogs = useCallback(async (year: number, month: number) => {
+    try {
+      const logs = await fetchLogsForMonth(year, month);
+      setMonthLogs(logs);
+    } catch (err) {
+      console.warn('[MenstruationScreen] fetchLogsForMonth error:', err);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadMonthLogs(viewedMonth.year, viewedMonth.month);
+  }, [viewedMonth.year, viewedMonth.month, loadMonthLogs]);
 
   const currentPhase = useMemo(() => {
     try {
@@ -70,13 +84,28 @@ export default function MenstruationScreen() {
     }
   }, [lastPeriodDate, cycleLength, periodLength]);
 
-  const markedDates = useMemo(
-    () => generateMarkedDates(viewedMonth.year, viewedMonth.month, cycleParams),
-    [viewedMonth.year, viewedMonth.month, lastPeriodDate, cycleLength, periodLength]
-  );
+  const markedDates = useMemo(() => {
+    const base = generateMarkedDates(viewedMonth.year, viewedMonth.month, cycleParams);
+    // Overlay actual logged period days as red dots
+    for (const log of monthLogs) {
+      if (log.flow_level && log.flow_level !== 'none') {
+        const existing = base[log.log_date] ?? {};
+        base[log.log_date] = {
+          ...existing,
+          marked: true,
+          dots: [{ key: 'logged', color: '#E74C3C' }],
+        };
+      }
+    }
+    return base;
+  }, [viewedMonth.year, viewedMonth.month, lastPeriodDate, cycleLength, periodLength, monthLogs]);
 
   const openSheet = useCallback((dateStr: string) => {
     setSelectedDate(dateStr);
+    setCrampLevel(1);
+    setMood('okay');
+    setFlowLevel('medium');
+    setNotes('');
     setSaved(false);
     setSheetVisible(true);
     Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
@@ -93,13 +122,14 @@ export default function MenstruationScreen() {
     try {
       await saveLog({ log_date: selectedDate, cramp_level: crampLevel, mood, flow_level: flowLevel, notes });
       setSaved(true);
+      await loadMonthLogs(viewedMonth.year, viewedMonth.month);
       setTimeout(() => closeSheet(), 800);
     } catch (err) {
       console.warn('[MenstruationScreen] save error:', err);
     } finally {
       setSaving(false);
     }
-  }, [selectedDate, crampLevel, mood, flowLevel, notes, closeSheet]);
+  }, [selectedDate, crampLevel, mood, flowLevel, notes, closeSheet, loadMonthLogs, viewedMonth]);
 
   const phaseColors = currentPhase ? PHASE_COLORS[currentPhase.phase] : PHASE_COLORS.follicular;
 
