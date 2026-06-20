@@ -1,5 +1,16 @@
 # PhasePlate — Changes Log
 
+## 2026-06-20 — Onboarding fix + TestFlight build 21
+
+### Bug fix
+
+**Onboarding Finish button not dismissing questionnaire** (commit `4d8284c`)
+- After completing all 8 steps and pressing Finish, the profile saved but the screen never closed — user had to force-quit and relaunch to reach the main app
+- Root cause: `handleFinish` called `navigation.goBack()`, but `OnboardingScreen` is not on a navigation stack — `App.tsx` renders it conditionally via `showOnboarding` state, so `goBack()` was a no-op
+- Fix: removed `useNavigation` from `OnboardingScreen`, added `onComplete` prop; `App.tsx` passes `onComplete={() => setShowOnboarding(false)}` which immediately swaps in `TabNavigator`
+
+---
+
 ## 2026-06-20 — First successful TestFlight submission
 
 ### EAS build chain fully fixed

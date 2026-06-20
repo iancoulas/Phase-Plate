@@ -53,6 +53,7 @@
 | 2026-06-20 | `"main": "expo-router/entry"` in package.json but no app/ directory | App uses @react-navigation, not expo-router file routing. Fix: create index.js with registerRootComponent, change "main" to "index.js" |
 | 2026-06-20 | Apple rejects submission: "Something went wrong" | Two causes: (1) expo-notifications plugin adds aps-environment:production entitlement but provisioning profile lacks Push Notifications capability. Fix: remove expo-notifications from plugins + remove remote-notification from UIBackgroundModes. (2) EAS default Xcode is pre-SDK-26; Apple requires Xcode 26+. Fix: set image in eas.json |
 | 2026-06-20 | image:"latest" in eas.json → build errors in 2 min | "latest" resolves to macos-tahoe-26.4-xcode-26.4 which has native module compilation incompatibilities with SDK 53. Use macos-sequoia-15.6-xcode-26.0 instead |
+| 2026-06-20 | Onboarding Finish button saves but doesn't close screen | OnboardingScreen called navigation.goBack() but is not on a nav stack — rendered conditionally by App.tsx. Fix: add onComplete prop, App.tsx passes () => setShowOnboarding(false) |
 
 ---
 
