@@ -6,6 +6,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { fetchOnboardingProfile } from '../../services/supabase';
+import { useCycle } from '../../contexts/CycleContext';
+import { calculateCyclePhase } from '../../utils/cycleCalculator';
 import { ProfileStackParamList } from '../../types';
 
 type Nav = StackNavigationProp<ProfileStackParamList>;
@@ -22,18 +24,49 @@ function Row({ title, subtitle, onPress }: { title: string; subtitle?: string; o
   );
 }
 
+const PHASE_LABELS: Record<string, string> = {
+  menstrual: 'Menstrual', follicular: 'Follicular', ovulatory: 'Ovulatory', luteal: 'Luteal',
+};
+const PHASE_COLORS: Record<string, string> = {
+  menstrual: '#E74C3C', follicular: '#27AE60', ovulatory: '#F39C12', luteal: '#9B59B6',
+};
+
 export default function ProfileScreen() {
   const navigation = useNavigation<Nav>();
+  const { lastPeriodDate, cycleLength, periodLength, isDefaultData } = useCycle();
   const [onboardingDone, setOnboardingDone] = useState(false);
 
   useEffect(() => {
     fetchOnboardingProfile().then(p => setOnboardingDone(!!p));
   }, []);
 
+  const phase = !isDefaultData ? (() => {
+    try { return calculateCyclePhase({ lastPeriodDate, cycleLength, periodLength }); }
+    catch { return null; }
+  })() : null;
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView>
         <Text style={styles.heading}>Profile</Text>
+
+        {/* Cycle summary card */}
+        {phase ? (
+          <View style={styles.summaryCard}>
+            <View style={styles.summaryRow}>
+              <View style={[styles.phaseDot, { backgroundColor: PHASE_COLORS[phase.phase] }]} />
+              <Text style={styles.summaryPhase}>{PHASE_LABELS[phase.phase]} Phase</Text>
+              <Text style={styles.summaryDay}>Day {phase.dayOfCycle}</Text>
+            </View>
+            <Text style={styles.summaryNext}>
+              Next period: {phase.nextPeriodDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryEmpty}>Set your cycle dates to see your phase summary.</Text>
+          </View>
+        )}
 
         <Text style={styles.sectionLabel}>MY CYCLE</Text>
         <View style={styles.card}>
@@ -65,6 +98,13 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f8f8' },
   heading: { fontSize: 28, fontWeight: '700', paddingHorizontal: 16, paddingTop: 8, paddingBottom: 16 },
+  summaryCard: { backgroundColor: '#fff', borderRadius: 14, marginHorizontal: 16, marginBottom: 20, padding: 16 },
+  summaryRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 },
+  phaseDot: { width: 10, height: 10, borderRadius: 5 },
+  summaryPhase: { fontSize: 17, fontWeight: '700', color: '#1a1a1a', flex: 1 },
+  summaryDay: { fontSize: 14, fontWeight: '600', color: '#666' },
+  summaryNext: { fontSize: 13, color: '#888' },
+  summaryEmpty: { fontSize: 14, color: '#aaa', textAlign: 'center', paddingVertical: 4 },
   sectionLabel: { fontSize: 12, fontWeight: '600', color: '#aaa', paddingHorizontal: 16, paddingBottom: 6, letterSpacing: 0.8 },
   card: { backgroundColor: '#fff', borderRadius: 12, marginHorizontal: 16, marginBottom: 20, overflow: 'hidden' },
   row: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },

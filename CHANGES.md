@@ -1,5 +1,22 @@
 # PhasePlate — Changes Log
 
+## 2026-06-20 — Phase 2: Alpha polish
+
+### New
+- **Profile cycle summary card** (`ProfileScreen.tsx`) — shows current phase (coloured dot), day of cycle, and next predicted period date pulled from CycleContext. Shows a prompt to set cycle dates when `isDefaultData` is true.
+- **Phase-aware nutrition hint** (`NutritionScreen.tsx`) — purple banner above the daily totals card showing the current cycle phase and its first nutrition tip from `cycleCalculator`. Only shown when real cycle data exists.
+
+### Fixed
+- **Notification toggle cancellation** (`NotificationSettingsScreen.tsx`) — turning off a single notification (e.g. pill reminder while period alert stays on) now correctly cancels it. Previous logic only cancelled when all three were off. Fix: cancel-all first, then reschedule whatever is still enabled.
+- **MenstruationScreen fetch error** — failed `fetchLogsForMonth` call now shows a tappable amber banner ("Could not load logs. Tap to retry.") instead of silently swallowing the error.
+- **NutritionScreen fetch error** — failed `fetchFoodLogsForDate` on mount now shows a tappable error message that retries the load when tapped.
+
+### Verified (no code changes)
+- **2.4 Period prediction accuracy** — hormonal contraception path (pill/IUD/implant/injection) correctly collapses ovulatory phase to menstrual→follicular→luteal. `nextPeriodDate` calculation verified correct.
+- **2.5 Onboarding → cycle seeding** — already completed in Phase 1.3 (Step 9).
+
+---
+
 ## 2026-06-20 — Phase 1.4 / 1.6 / 1.7: Nutrition, barcode, empty states
 
 ### Fixed

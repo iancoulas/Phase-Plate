@@ -38,6 +38,10 @@ export default function NotificationSettingsScreen() {
     setPrefs(next);
     await saveNotificationSettings(next);
 
+    // Cancel everything first, then reschedule only what is enabled.
+    // This ensures toggling one notification off doesn't leave it firing.
+    await cancelAllPhasePlateNotifications();
+
     const [hour, minute] = (next.pillReminderTime ?? '08:00').split(':').map(Number);
 
     if (next.pillReminder) {
@@ -54,10 +58,6 @@ export default function NotificationSettingsScreen() {
       const nextPhaseDate = new Date();
       nextPhaseDate.setDate(nextPhaseDate.getDate() + phase.daysUntilNextPhase + 1);
       await schedulePhaseTransitionAlert(nextPhaseDate, phase.phase);
-    }
-
-    if (!next.pillReminder && !next.periodAlert && !next.phaseTransition) {
-      await cancelAllPhasePlateNotifications();
     }
   }, [lastPeriodDate, cycleLength, periodLength]);
 

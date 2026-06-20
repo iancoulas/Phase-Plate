@@ -59,16 +59,19 @@ export default function MenstruationScreen() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [monthLogs, setMonthLogs] = useState<MenstruationLog[]>([]);
+  const [fetchError, setFetchError] = useState(false);
   const slideAnim = useRef(new Animated.Value(300)).current;
 
   const cycleParams = { lastPeriodDate, cycleLength, periodLength };
 
   const loadMonthLogs = useCallback(async (year: number, month: number) => {
+    setFetchError(false);
     try {
       const logs = await fetchLogsForMonth(year, month);
       setMonthLogs(logs);
     } catch (err) {
       console.warn('[MenstruationScreen] fetchLogsForMonth error:', err);
+      setFetchError(true);
     }
   }, []);
 
@@ -168,6 +171,17 @@ export default function MenstruationScreen() {
             <Ionicons name="calendar-outline" size={18} color="#8B3A5A" />
             <Text style={styles.setupBannerText}>Set your last period date for accurate phase predictions</Text>
             <Ionicons name="chevron-forward" size={16} color="#8B3A5A" />
+          </TouchableOpacity>
+        )}
+
+        {/* Fetch error retry */}
+        {fetchError && (
+          <TouchableOpacity
+            style={styles.errorBanner}
+            onPress={() => loadMonthLogs(viewedMonth.year, viewedMonth.month)}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.errorBannerText}>Could not load logs. Tap to retry.</Text>
           </TouchableOpacity>
         )}
 
@@ -282,6 +296,8 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f8f8f8' },
   setupBanner: { flexDirection: 'row', alignItems: 'center', gap: 8, margin: 16, marginBottom: 0, backgroundColor: '#FDF0F4', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#EDD5DF' },
   setupBannerText: { flex: 1, fontSize: 13, color: '#8B3A5A', fontWeight: '500' },
+  errorBanner: { margin: 16, marginBottom: 0, backgroundColor: '#FFF3CD', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#FFEAA7' },
+  errorBannerText: { fontSize: 13, color: '#856404', textAlign: 'center', fontWeight: '500' },
   phaseCard: { margin: 16, borderRadius: 16, padding: 20 },
   phaseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   phaseName: { fontSize: 22, fontWeight: '700' },

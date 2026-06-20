@@ -18,6 +18,8 @@ import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 
 import { saveFoodLog, fetchFoodLogsForDate, FoodLog } from '../../services/supabase';
+import { useCycle } from '../../contexts/CycleContext';
+import { calculateCyclePhase } from '../../utils/cycleCalculator';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
 
 const OPENAI_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? '';
@@ -89,6 +91,13 @@ async function analysePhoto(base64: string): Promise<AnalysedFood> {
 
 export default function NutritionScreen() {
   const today = new Date().toISOString().split('T')[0];
+  const { lastPeriodDate, cycleLength, periodLength, isDefaultData } = useCycle();
+  const phaseHint = !isDefaultData ? (() => {
+    try {
+      const result = calculateCyclePhase({ lastPeriodDate, cycleLength, periodLength });
+      return { phase: result.phase, tip: result.nutritionTips[0] };
+    } catch { return null; }
+  })() : null;
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [analysing, setAnalysing] = useState(false);
   const [analysed, setAnalysed] = useState<AnalysedFood | null>(null);
@@ -96,10 +105,22 @@ export default function NutritionScreen() {
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [logsLoading, setLogsLoading] = useState(true);
 
-  useEffect(() => {
-    fetchFoodLogsForDate(today).then(setLogs);
+  const loadLogs = useCallback(async () => {
+    setLogsLoading(true);
+    setError(null);
+    try {
+      const data = await fetchFoodLogsForDate(today);
+      setLogs(data);
+    } catch {
+      setError('Could not load your meals. Tap to retry.');
+    } finally {
+      setLogsLoading(false);
+    }
   }, [today]);
+
+  useEffect(() => { loadLogs(); }, [loadLogs]);
 
   const openCamera = useCallback(async () => {
     setError(null);
@@ -151,7 +172,19 @@ export default function NutritionScreen() {
       <Text style={styles.heading}>Today's Plate</Text>
       <Text style={styles.subheading}>{today}</Text>
 
-      {error && <Text style={styles.errorText}>{error}</Text>}
+      {error && (
+        <TouchableOpacity onPress={loadLogs}>
+          <Text style={styles.errorText}>{error}</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Phase-aware nutrition hint */}
+      {phaseHint && (
+        <View style={styles.hintBanner}>
+          <Text style={styles.hintPhase}>{phaseHint.phase.charAt(0).toUpperCase() + phaseHint.phase.slice(1)} phase</Text>
+          <Text style={styles.hintTip}>{phaseHint.tip}</Text>
+        </View>
+      )}
 
       {/* Daily nutrition summary */}
       <View style={styles.totalCard}>
@@ -256,6 +289,9 @@ const styles = StyleSheet.create({
   macroValue: { fontSize: 17, fontWeight: '700' },
   macroLabel: { fontSize: 11, color: '#aaa', fontWeight: '500' },
   errorText: { color: '#E74C3C', paddingHorizontal: 16, marginBottom: 8, fontSize: 13 },
+  hintBanner: { marginHorizontal: 16, marginBottom: 10, backgroundColor: '#EDE7F6', borderRadius: 10, padding: 12 },
+  hintPhase: { fontSize: 12, fontWeight: '700', color: '#6C3483', marginBottom: 2, textTransform: 'uppercase', letterSpacing: 0.5 },
+  hintTip: { fontSize: 13, color: '#4A235A', lineHeight: 18 },
   loaderContainer: { alignItems: 'center', paddingVertical: 24 },
   loaderIcon: { fontSize: 48 },
   loaderText: { marginTop: 12, fontSize: 15, color: '#666' },
