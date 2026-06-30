@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   ActivityIndicator,
+  Alert,
   KeyboardAvoidingView,
   Platform,
   ScrollView,
@@ -27,11 +28,9 @@ export default function AuthScreen({ onBack }: Props) {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   async function handleSubmit() {
     setError(null);
-    setSuccess(null);
     const trimmedEmail = email.trim().toLowerCase();
     if (!trimmedEmail || !password) {
       setError('Please enter your email and password.');
@@ -44,7 +43,11 @@ export default function AuthScreen({ onBack }: Props) {
         if (err) {
           setError(err);
         } else {
-          setSuccess('Account created! Check your email to verify, then sign in on any device to access your data.');
+          Alert.alert(
+            'Check Your Email',
+            `A confirmation link has been sent to ${trimmedEmail}.\n\nTap the link to activate your account, then sign in on any device to access your data.`,
+            [{ text: 'Got it', onPress: onBack }],
+          );
         }
       } else {
         const err = await signInWithEmail(trimmedEmail, password);
@@ -83,13 +86,13 @@ export default function AuthScreen({ onBack }: Props) {
           <View style={styles.toggle}>
             <TouchableOpacity
               style={[styles.toggleBtn, isCreateMode && styles.toggleBtnActive]}
-              onPress={() => { setMode('create'); setError(null); setSuccess(null); }}
+              onPress={() => { setMode('create'); setError(null); }}
             >
               <Text style={[styles.toggleText, isCreateMode && styles.toggleTextActive]}>Create Account</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.toggleBtn, !isCreateMode && styles.toggleBtnActive]}
-              onPress={() => { setMode('signin'); setError(null); setSuccess(null); }}
+              onPress={() => { setMode('signin'); setError(null); }}
             >
               <Text style={[styles.toggleText, !isCreateMode && styles.toggleTextActive]}>Sign In</Text>
             </TouchableOpacity>
@@ -123,11 +126,7 @@ export default function AuthScreen({ onBack }: Props) {
                 <Text style={styles.errorText}>{error}</Text>
               </View>
             )}
-            {success && (
-              <View style={styles.successBox}>
-                <Text style={styles.successText}>{success}</Text>
-              </View>
-            )}
+
 
             <TouchableOpacity
               style={[styles.submitBtn, loading && styles.submitBtnDisabled]}
@@ -190,8 +189,6 @@ const styles = StyleSheet.create({
   },
   errorBox: { backgroundColor: '#FFF0F0', borderRadius: 8, padding: 12 },
   errorText: { color: '#C0392B', fontSize: 14, lineHeight: 20 },
-  successBox: { backgroundColor: '#F0FFF4', borderRadius: 8, padding: 12 },
-  successText: { color: '#27AE60', fontSize: 14, lineHeight: 20 },
   submitBtn: {
     backgroundColor: ROSE,
     borderRadius: 12,
