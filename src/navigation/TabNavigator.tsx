@@ -8,41 +8,48 @@ import NutritionScreen from '../screens/Nutrition/NutritionScreen';
 import SleepScreen from '../screens/Sleep/SleepScreen';
 import PhysicalScreen from '../screens/Physical/PhysicalScreen';
 import ProfileStackNavigator from './ProfileStackNavigator';
+import PlateTabIcon from '../components/PlateTabIcon';
 import { RootTabParamList } from '../types';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
-type IoniconsName = React.ComponentProps<typeof Ionicons>['name'];
-
-const TAB_ICONS: Record<keyof RootTabParamList, { active: IoniconsName; inactive: IoniconsName }> = {
-  Home:         { active: 'apps',             inactive: 'apps-outline' },
-  Menstruation: { active: 'calendar',         inactive: 'calendar-outline' },
-  Nutrition:    { active: 'nutrition',        inactive: 'nutrition-outline' },
-  Sleep:        { active: 'moon',             inactive: 'moon-outline' },
-  Physical:     { active: 'body',             inactive: 'body-outline' },
-  Profile:      { active: 'person',           inactive: 'person-outline' },
-};
+// Hidden screens are still navigable via navigation.navigate() from the plate —
+// they just don't appear as buttons in the bottom tab bar.
+const HIDDEN_TAB: object = { tabBarButton: () => null };
 
 export default function TabNavigator() {
   return (
     <Tab.Navigator
-      screenOptions={({ route }) => ({
+      screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#9B59B6',
+        tabBarActiveTintColor: '#8B3A5A',
         tabBarInactiveTintColor: '#aaa',
         tabBarStyle: { borderTopWidth: 0, elevation: 0, shadowOpacity: 0 },
-        tabBarIcon: ({ focused, color, size }) => {
-          const icons = TAB_ICONS[route.name];
-          return <Ionicons name={focused ? icons.active : icons.inactive} size={size} color={color} />;
-        },
-      })}
+      }}
     >
-      <Tab.Screen name="Home"         component={HomeScreen}            options={{ title: 'Home' }} />
-      <Tab.Screen name="Menstruation" component={MenstruationScreen}    options={{ title: 'Cycle' }} />
-      <Tab.Screen name="Nutrition"    component={NutritionScreen}       options={{ title: 'Nutrition' }} />
-      <Tab.Screen name="Sleep"        component={SleepScreen}           options={{ title: 'Sleep' }} />
-      <Tab.Screen name="Physical"     component={PhysicalScreen}        options={{ title: 'Physical' }} />
-      <Tab.Screen name="Profile"      component={ProfileStackNavigator} options={{ title: 'Profile' }} />
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ color, size }) => <PlateTabIcon color={color} size={size} />,
+        }}
+      />
+      {/* Health screens — hidden from bar, reachable from the plate */}
+      <Tab.Screen name="Menstruation" component={MenstruationScreen} options={HIDDEN_TAB} />
+      <Tab.Screen name="Nutrition"    component={NutritionScreen}    options={HIDDEN_TAB} />
+      <Tab.Screen name="Sleep"        component={SleepScreen}        options={HIDDEN_TAB} />
+      <Tab.Screen name="Physical"     component={PhysicalScreen}     options={HIDDEN_TAB} />
+      <Tab.Screen
+        name="Profile"
+        component={ProfileStackNavigator}
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ focused, color, size }) => (
+            <Ionicons name={focused ? 'person' : 'person-outline'} size={size} color={color} />
+          ),
+        }}
+      />
     </Tab.Navigator>
   );
 }
