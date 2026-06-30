@@ -6,7 +6,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import Svg, { Path, Circle } from 'react-native-svg';
+import Svg, { Path, Circle, Line } from 'react-native-svg';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
@@ -22,7 +22,6 @@ const CX = PLATE_SIZE / 2;
 const CY = PLATE_SIZE / 2;
 const OUTER_R = PLATE_SIZE / 2 - 4;
 const INNER_R = 44;
-const GAP_DEG = 2.5;
 
 type Nav = BottomTabNavigationProp<RootTabParamList>;
 
@@ -67,10 +66,10 @@ function toXY(r: number, deg: number) {
 }
 
 function slicePath(startDeg: number, endDeg: number): string {
-  const s1 = toXY(INNER_R, startDeg + GAP_DEG);
-  const s2 = toXY(OUTER_R, startDeg + GAP_DEG);
-  const e2 = toXY(OUTER_R, endDeg - GAP_DEG);
-  const e1 = toXY(INNER_R, endDeg - GAP_DEG);
+  const s1 = toXY(INNER_R, startDeg);
+  const s2 = toXY(OUTER_R, startDeg);
+  const e2 = toXY(OUTER_R, endDeg);
+  const e1 = toXY(INNER_R, endDeg);
   return [
     `M ${s1.x} ${s1.y}`,
     `L ${s2.x} ${s2.y}`,
@@ -142,6 +141,11 @@ export default function HomeScreen() {
               onPress={() => navigation.navigate(q.screen)}
             />
           ))}
+          {/* Straight dividers at 0°/90°/180°/270° — drawn from inner ring to outer ring */}
+          <Line x1={CX}           y1={CY - OUTER_R} x2={CX}           y2={CY - INNER_R} stroke="#F5EDE8" strokeWidth={2} />
+          <Line x1={CX + INNER_R} y1={CY}           x2={CX + OUTER_R} y2={CY}           stroke="#F5EDE8" strokeWidth={2} />
+          <Line x1={CX}           y1={CY + INNER_R} x2={CX}           y2={CY + OUTER_R} stroke="#F5EDE8" strokeWidth={2} />
+          <Line x1={CX - OUTER_R} y1={CY}           x2={CX - INNER_R} y2={CY}           stroke="#F5EDE8" strokeWidth={2} />
           <Circle cx={CX} cy={CY} r={INNER_R} fill="#F5EDE8" />
         </Svg>
 
@@ -160,9 +164,6 @@ export default function HomeScreen() {
           );
         })}
 
-        <View style={styles.centerLabel} pointerEvents="none">
-          <Text style={styles.centerText}>PP</Text>
-        </View>
       </View>
 
       <Text style={styles.tapHint}>Tap a section to get started</Text>
@@ -230,21 +231,6 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 0.3,
-  },
-  centerLabel: {
-    position: 'absolute',
-    left: CX - INNER_R,
-    top: CY - INNER_R,
-    width: INNER_R * 2,
-    height: INNER_R * 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  centerText: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#8B3A5A',
-    letterSpacing: 1,
   },
   tapHint: {
     marginTop: 28,
