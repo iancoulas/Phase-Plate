@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, isAnonymous: user?.is_anonymous ?? true, loading }}>
+    <AuthContext.Provider value={{ user, isAnonymous: !user?.email, loading }}>
       {children}
     </AuthContext.Provider>
   );

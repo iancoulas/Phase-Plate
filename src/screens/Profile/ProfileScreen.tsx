@@ -35,7 +35,7 @@ const PHASE_COLORS: Record<string, string> = {
 export default function ProfileScreen() {
   const navigation = useNavigation<Nav>();
   const { lastPeriodDate, cycleLength, periodLength, isDefaultData } = useCycle();
-  const { user, isAnonymous } = useAuth();
+  const { user, isAnonymous, loading: authLoading } = useAuth();
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -102,7 +102,11 @@ export default function ProfileScreen() {
 
         <Text style={styles.sectionLabel}>ACCOUNT</Text>
         <View style={styles.card}>
-          {isAnonymous ? (
+          {authLoading ? (
+            <View style={styles.row}>
+              <Text style={styles.rowSub}>Loading…</Text>
+            </View>
+          ) : isAnonymous ? (
             <>
               <Row
                 title="Create Account"
