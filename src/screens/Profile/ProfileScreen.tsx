@@ -5,8 +5,9 @@ import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { fetchOnboardingProfile } from '../../services/supabase';
+import { fetchOnboardingProfile, authSignOut } from '../../services/supabase';
 import { useCycle } from '../../contexts/CycleContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { calculateCyclePhase } from '../../utils/cycleCalculator';
 import { ProfileStackParamList } from '../../types';
 
@@ -34,11 +35,19 @@ const PHASE_COLORS: Record<string, string> = {
 export default function ProfileScreen() {
   const navigation = useNavigation<Nav>();
   const { lastPeriodDate, cycleLength, periodLength, isDefaultData } = useCycle();
+  const { user, isAnonymous } = useAuth();
   const [onboardingDone, setOnboardingDone] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
     fetchOnboardingProfile().then(p => setOnboardingDone(!!p));
   }, []);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    await authSignOut();
+    setSigningOut(false);
+  }
 
   const phase = !isDefaultData ? (() => {
     try { return calculateCyclePhase({ lastPeriodDate, cycleLength, periodLength }); }
@@ -89,6 +98,43 @@ export default function ProfileScreen() {
             subtitle="Pill reminders, period alerts, phase transitions"
             onPress={() => navigation.navigate('NotificationSettings')}
           />
+        </View>
+
+        <Text style={styles.sectionLabel}>ACCOUNT</Text>
+        <View style={styles.card}>
+          {isAnonymous ? (
+            <>
+              <Row
+                title="Create Account"
+                subtitle="Save your data and sync across devices"
+                onPress={() => navigation.navigate('Auth')}
+              />
+              <Row
+                title="Sign In"
+                subtitle="Already have an account?"
+                onPress={() => navigation.navigate('Auth')}
+              />
+            </>
+          ) : (
+            <>
+              <View style={[styles.row, { borderBottomWidth: 1, borderBottomColor: '#f5f5f5' }]}>
+                <View style={styles.rowText}>
+                  <Text style={styles.rowTitle}>Signed in</Text>
+                  <Text style={styles.rowSub}>{user?.email}</Text>
+                </View>
+                <Ionicons name="person-circle-outline" size={22} color="#8B3A5A" />
+              </View>
+              <TouchableOpacity
+                style={styles.row}
+                onPress={handleSignOut}
+                disabled={signingOut}
+              >
+                <Text style={[styles.rowTitle, { color: '#C0392B' }]}>
+                  {signingOut ? 'Signing out…' : 'Sign Out'}
+                </Text>
+              </TouchableOpacity>
+            </>
+          )}
         </View>
       </ScrollView>
     </SafeAreaView>

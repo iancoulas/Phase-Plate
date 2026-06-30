@@ -43,7 +43,13 @@ function Chip({ label, selected, onPress }: { label: string; selected: boolean; 
   );
 }
 
-export default function OnboardingScreen({ onComplete }: { onComplete: () => void }) {
+export default function OnboardingScreen({
+  onComplete,
+  onSignIn,
+}: {
+  onComplete: () => void;
+  onSignIn?: () => void;
+}) {
   const [step, setStep] = useState(0);
   const [profile, setProfile] = useState<OnboardingProfile>(BLANK);
   const [saving, setSaving] = useState(false);
@@ -348,6 +354,11 @@ export default function OnboardingScreen({ onComplete }: { onComplete: () => voi
             <Text style={styles.nextBtnText}>{saving ? 'Saving…' : step < TOTAL_STEPS - 1 ? 'Continue' : 'Finish'}</Text>
           </TouchableOpacity>
         </View>
+        {step === 0 && onSignIn && (
+          <TouchableOpacity style={styles.signInLink} onPress={onSignIn}>
+            <Text style={styles.signInLinkText}>Already have an account? Sign in</Text>
+          </TouchableOpacity>
+        )}
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
@@ -379,4 +390,6 @@ const styles = StyleSheet.create({
   stepBtn: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#EDE7F6', justifyContent: 'center', alignItems: 'center' },
   stepBtnText: { fontSize: 20, color: '#9B59B6', fontWeight: '600', lineHeight: 24 },
   stepValue: { fontSize: 14, fontWeight: '600', color: '#1a1a1a', minWidth: 90, textAlign: 'center' },
+  signInLink: { alignItems: 'center', paddingVertical: 14, paddingBottom: 20 },
+  signInLinkText: { fontSize: 14, color: '#8B3A5A', fontWeight: '500' },
 });

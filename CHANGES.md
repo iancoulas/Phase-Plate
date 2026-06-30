@@ -1,5 +1,20 @@
 # PhasePlate — Changes Log
 
+## 2026-06-30 — User login & profile saving
+
+### New
+- **AuthContext** (`src/contexts/AuthContext.tsx`) — wraps Supabase auth state; exposes `user`, `isAnonymous`, `loading` via `useAuth()` hook. Listens to `onAuthStateChange` for real-time session updates.
+- **AuthScreen** (`src/screens/Auth/AuthScreen.tsx`) — email + password sign in / create account modal screen. Two-mode toggle (Create Account / Sign In). "Create Account" uses Supabase `updateUser` to upgrade the anonymous session to a real account, preserving all existing health data (logs, cycle settings, onboarding profile) under the same user_id. "Sign In" uses `signInWithPassword`. Branded in app rose (`#8B3A5A`).
+- **Auth route in ProfileStackNavigator** — `Auth` screen added to `ProfileStackParamList`; navigates as modal from Profile tab.
+- **Account section in ProfileScreen** — new ACCOUNT card at bottom of Profile tab. Anonymous users see "Create Account" and "Sign In" rows. Signed-in users see their email with a person icon and a "Sign Out" button (red).
+- **Onboarding sign-in escape hatch** — "Already have an account? Sign in" link shown on step 0 of OnboardingScreen. Triggers a Modal (`<AuthScreen>`) from App.tsx. After sign-in, `onAuthStateChange` re-checks the onboarding profile and routes the user directly to the main app if they have an existing profile. Solves the "returning user on new device" flow.
+
+### Updated
+- **App.tsx** — wrapped with `AuthProvider`; `onAuthStateChange` listener re-fetches onboarding profile on non-anonymous SIGNED_IN events and auto-dismisses the auth modal.
+- **supabase.ts** — added `signInWithEmail`, `linkEmailToAnonymous`, `authSignOut` (signs out then restores anonymous session so the app continues to function).
+
+---
+
 ## 2026-06-20 — Manual food entry FAB
 
 ### New

@@ -214,6 +214,29 @@ export async function fetchOnboardingProfile(): Promise<Record<string, unknown> 
   return data?.onboarding_profile ?? null;
 }
 
+// ─── Auth helpers ─────────────────────────────────────────────────────────────
+
+export async function signInWithEmail(email: string, password: string): Promise<string | null> {
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  return error?.message ?? null;
+}
+
+/**
+ * Upgrades the current anonymous session to a real email/password account.
+ * All existing user data is preserved because the user_id doesn't change.
+ * If the Supabase project requires email confirmation, the user stays anonymous
+ * until they click the verification link.
+ */
+export async function linkEmailToAnonymous(email: string, password: string): Promise<string | null> {
+  const { error } = await supabase.auth.updateUser({ email, password });
+  return error?.message ?? null;
+}
+
+export async function authSignOut(): Promise<void> {
+  await supabase.auth.signOut();
+  await ensureAnonSession();
+}
+
 // ─── Cycle overrides ──────────────────────────────────────────────────────────
 
 export interface CycleOverride {

@@ -13,6 +13,7 @@
 - [ ] **OpenAI key exposure** — currently EXPO_PUBLIC_* (ships in bundle). Move to Supabase Edge Function before App Store release
 - [ ] **RevenueCat dashboard config** — products, entitlements ("plus", "premium"), offerings not yet created
 - [ ] **PaywallScreen not wired into nav** — no entry point yet; has onClose prop ready for modal presentation
+- [x] **User login & profile saving** — AuthContext + AuthScreen + authSignOut added 2026-06-30; Profile tab ACCOUNT section; "Create Account" upgrades anon → real via Supabase updateUser (data preserved); "Sign In" via signInWithPassword; onboarding escape hatch on step 0 for returning users on new devices
 - [ ] **First-run onboarding** — App.tsx handles via fetchOnboardingProfile(); verify works on clean install
 - [ ] **HealthKit entitlement** — needs Apple Developer → Identifiers → Health entitlement enabled for bundle ID (separate from code — must be done in the portal)
 - [ ] **Replace placeholder icons** — assets/icon.png etc. are solid-colour placeholder PNGs; replace with real branded artwork before public App Store launch
@@ -72,6 +73,9 @@
 
 | Decision | Why | Alternatives considered |
 |----------|-----|------------------------|
+| `updateUser({ email, password })` for "Create Account" | Upgrades anonymous session in-place; all user data (logs, cycle, onboarding) preserved under same user_id | signUp (creates new user, orphans anon data) |
+| Auth modal from App.tsx for onboarding sign-in | OnboardingScreen renders outside NavigationContainer; can't use `navigation.navigate` from there | Inline auth form in OnboardingScreen (coupling) |
+| `onAuthStateChange` re-checks onboarding on SIGNED_IN (non-anon) | Handles "returning user on new device" flow without requiring nav changes | Manual refresh button after sign-in |
 | expo-camera instead of expo-barcode-scanner | expo-barcode-scanner removed in SDK 51+ | N/A |
 | react-native-purchases two-entitlement model (plus + premium) | Simpler RevenueCat dashboard; Premium subsumes Plus | One entitlement per feature |
 | Guarded `require()` for native health modules | Keeps app running in Expo Go / simulators without linked modules | Hard require (crash on non-native) |

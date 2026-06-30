@@ -13,4 +13,5 @@ export type ProfileStackParamList = {
   NotificationSettings: undefined;
   Onboarding: undefined;
   CycleSettings: undefined;
+  Auth: undefined;
 };
