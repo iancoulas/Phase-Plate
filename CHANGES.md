@@ -1,5 +1,16 @@
 # PhasePlate — Changes Log
 
+## 2026-06-30 — Sleep log v1 + cycle date calendar picker
+
+### New
+- **Sleep manual log** (`src/screens/Sleep/SleepScreen.tsx`) — replaces the placeholder. Shows today's sleep card (empty state or summary) with a "Log Sleep / Edit Today" button. Log sheet slides up from the bottom (same pattern as MenstruationScreen) with: bedtime stepper (12-hour AM/PM, 15-min increments), wake time stepper, calculated sleep hours display, quality rating 1-5, energy level chips (Sluggish / Low / Normal / High / Energized), optional notes. Upserts to a new `sleep_logs` table (UNIQUE on user_id, log_date). Shows a 7-day recent history list below.
+- **`sleep_logs` Supabase table** — DDL added to `supabase.ts` comment block (run in SQL Editor). `saveSleepLog` and `fetchSleepLogs` functions added. `SleepLog` type and `EnergyLevel` union type exported.
+
+### Updated
+- **CycleSettingsScreen** (`src/screens/Profile/CycleSettingsScreen.tsx`) — "Last period started" row now expands an inline `Calendar` (from `react-native-calendars/src/calendar`) on tap. Future dates blocked via `maxDate`. Selecting a day closes the calendar and updates the date. Cycle and period length steppers unchanged.
+
+---
+
 ## 2026-06-30 — User login & profile saving
 
 ### New

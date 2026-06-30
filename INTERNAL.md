@@ -14,6 +14,8 @@
 - [ ] **RevenueCat dashboard config** — products, entitlements ("plus", "premium"), offerings not yet created
 - [ ] **PaywallScreen not wired into nav** — no entry point yet; has onClose prop ready for modal presentation
 - [x] **User login & profile saving** — AuthContext + AuthScreen + authSignOut added 2026-06-30; Profile tab ACCOUNT section; "Create Account" upgrades anon → real via Supabase updateUser (data preserved); "Sign In" via signInWithPassword; onboarding escape hatch on step 0 for returning users on new devices
+- [x] **Sleep log v1** — SleepScreen has bedtime/wake steppers, quality 1-5, energy chips, notes, today card + 7-day history; sleep_logs table DDL in supabase.ts (run in SQL editor)
+- [x] **CycleSettings calendar picker** — last period date now uses inline Calendar from react-native-calendars (same import as MenstruationScreen); future dates blocked via maxDate
 - [ ] **First-run onboarding** — App.tsx handles via fetchOnboardingProfile(); verify works on clean install
 - [ ] **HealthKit entitlement** — needs Apple Developer → Identifiers → Health entitlement enabled for bundle ID (separate from code — must be done in the portal)
 - [ ] **Replace placeholder icons** — assets/icon.png etc. are solid-colour placeholder PNGs; replace with real branded artwork before public App Store launch

@@ -4,6 +4,24 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 /*
   SQL schema — run once in Supabase SQL Editor:
 
+  -- Sleep logs
+  CREATE TABLE IF NOT EXISTS sleep_logs (
+    id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
+    log_date     DATE NOT NULL,
+    bedtime      TEXT,
+    wake_time    TEXT,
+    sleep_hours  NUMERIC,
+    quality      SMALLINT CHECK (quality BETWEEN 1 AND 5),
+    energy_level TEXT CHECK (energy_level IN ('sluggish','low','normal','high','energized')),
+    notes        TEXT,
+    created_at   TIMESTAMPTZ DEFAULT NOW(),
+    UNIQUE (user_id, log_date)
+  );
+  ALTER TABLE sleep_logs ENABLE ROW LEVEL SECURITY;
+  CREATE POLICY "Users manage own sleep logs" ON sleep_logs FOR ALL
+    USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
   CREATE TABLE IF NOT EXISTS menstruation_logs (
     id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id      UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
@@ -263,4 +281,42 @@ export async function fetchCycleOverride(): Promise<CycleOverride | null> {
     .maybeSingle();
   if (error) console.warn('[Supabase] fetchCycleOverride error:', error.message);
   return data ?? null;
+}
+
+// ─── Sleep logs ───────────────────────────────────────────────────────────────
+
+export type EnergyLevel = 'sluggish' | 'low' | 'normal' | 'high' | 'energized';
+
+export interface SleepLog {
+  id?: string;
+  user_id?: string;
+  log_date: string;
+  bedtime?: string;
+  wake_time?: string;
+  sleep_hours?: number;
+  quality?: number;
+  energy_level?: EnergyLevel;
+  notes?: string;
+}
+
+export async function saveSleepLog(log: Omit<SleepLog, 'id' | 'user_id'>): Promise<SleepLog | null> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const { data, error } = await supabase
+    .from('sleep_logs')
+    .upsert({ ...log, user_id: user?.id }, { onConflict: 'user_id,log_date' })
+    .select()
+    .single();
+  if (error) console.warn('[Supabase] saveSleepLog error:', error.message);
+  return data ?? null;
+}
+
+export async function fetchSleepLogs(startDate: string, endDate: string): Promise<SleepLog[]> {
+  const { data, error } = await supabase
+    .from('sleep_logs')
+    .select('*')
+    .gte('log_date', startDate)
+    .lte('log_date', endDate)
+    .order('log_date', { ascending: false });
+  if (error) console.warn('[Supabase] fetchSleepLogs error:', error.message);
+  return data ?? [];
 }
