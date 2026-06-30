@@ -4,6 +4,7 @@ export type RootTabParamList = {
   Home: undefined;
   Menstruation: undefined;
   Nutrition: undefined;
+  Sleep: undefined;
   Physical: undefined;
   Profile: undefined;
 };

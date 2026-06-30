@@ -35,11 +35,16 @@ type QuadrantDef = {
   endDeg: number;
 };
 
+// Clockwise from top-right:
+//   Cycle     270–360  (top-right)
+//   Nutrition   0–90   (bottom-right)
+//   Sleep      90–180  (bottom-left)  ← was Physical
+//   Physical  180–270  (top-left)     ← was Profile
 const QUADRANTS: QuadrantDef[] = [
   { screen: 'Menstruation', label: 'Cycle',     color: '#8B3A5A', icon: 'calendar',  startDeg: 270, endDeg: 360 },
   { screen: 'Nutrition',    label: 'Nutrition', color: '#6B5A2D', icon: 'nutrition', startDeg: 0,   endDeg: 90  },
-  { screen: 'Physical',     label: 'Physical',  color: '#2D4A6B', icon: 'body',      startDeg: 90,  endDeg: 180 },
-  { screen: 'Profile',      label: 'Profile',   color: '#9B59B6', icon: 'person',    startDeg: 180, endDeg: 270 },
+  { screen: 'Sleep',        label: 'Sleep',     color: '#2C5364', icon: 'moon',      startDeg: 90,  endDeg: 180 },
+  { screen: 'Physical',     label: 'Physical',  color: '#2D4A6B', icon: 'body',      startDeg: 180, endDeg: 270 },
 ];
 
 const PHASE_LABELS: Record<string, string> = {
@@ -105,20 +110,28 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.greeting}>{greeting}</Text>
-        {cyclePhase ? (
-          <View style={[styles.phaseBadge, { backgroundColor: PHASE_COLORS[cyclePhase.phase] ?? '#9B59B6' }]}>
-            <Text style={styles.phaseBadgeText}>
-              {PHASE_LABELS[cyclePhase.phase] ?? cyclePhase.phase} · Day {cyclePhase.dayOfCycle}
-            </Text>
-          </View>
-        ) : (
-          <Text style={styles.setupHint}>Log your first period to see your phase</Text>
-        )}
+        <View style={styles.headerLeft}>
+          <Text style={styles.greeting}>{greeting}</Text>
+          {cyclePhase ? (
+            <View style={[styles.phaseBadge, { backgroundColor: PHASE_COLORS[cyclePhase.phase] ?? '#9B59B6' }]}>
+              <Text style={styles.phaseBadgeText}>
+                {PHASE_LABELS[cyclePhase.phase] ?? cyclePhase.phase} · Day {cyclePhase.dayOfCycle}
+              </Text>
+            </View>
+          ) : (
+            <Text style={styles.setupHint}>Log your first period to see your phase</Text>
+          )}
+        </View>
+        <TouchableOpacity
+          style={styles.profileBtn}
+          onPress={() => navigation.navigate('Profile')}
+          activeOpacity={0.7}
+        >
+          <Ionicons name="person-circle-outline" size={34} color="#8B3A5A" />
+        </TouchableOpacity>
       </View>
 
       <View style={styles.plateWrapper}>
-        {/* SVG donut plate */}
         <Svg width={PLATE_SIZE} height={PLATE_SIZE}>
           <Circle cx={CX} cy={CY} r={OUTER_R + 3} fill="rgba(0,0,0,0.06)" />
           {QUADRANTS.map((q) => (
@@ -132,7 +145,6 @@ export default function HomeScreen() {
           <Circle cx={CX} cy={CY} r={INNER_R} fill="#F5EDE8" />
         </Svg>
 
-        {/* Icon + label overlays absolutely positioned over the SVG */}
         {QUADRANTS.map((q) => {
           const pos = iconPos(q.startDeg, q.endDeg);
           return (
@@ -148,7 +160,6 @@ export default function HomeScreen() {
           );
         })}
 
-        {/* Center badge */}
         <View style={styles.centerLabel} pointerEvents="none">
           <Text style={styles.centerText}>PP</Text>
         </View>
@@ -166,9 +177,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   header: {
-    alignItems: 'center',
-    paddingTop: 24,
-    paddingBottom: 32,
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    paddingTop: 20,
+    paddingBottom: 28,
+    paddingHorizontal: 20,
+    width: '100%',
+  },
+  headerLeft: {
+    flex: 1,
     gap: 10,
   },
   greeting: {
@@ -177,6 +194,7 @@ const styles = StyleSheet.create({
     color: '#1a1a1a',
   },
   phaseBadge: {
+    alignSelf: 'flex-start',
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 20,
@@ -189,6 +207,10 @@ const styles = StyleSheet.create({
   setupHint: {
     fontSize: 14,
     color: '#999',
+  },
+  profileBtn: {
+    marginTop: 2,
+    padding: 4,
   },
   plateWrapper: {
     width: PLATE_SIZE,
