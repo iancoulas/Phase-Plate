@@ -34,6 +34,8 @@ export default function App() {
         setShowOnboarding(!profile);
       } catch (err) {
         console.warn('[App] bootstrap error:', err);
+        // Fail closed: if consent status couldn't be confirmed, don't skip the legal wall.
+        setShowConsent(true);
         setShowOnboarding(false);
       } finally {
         setAuthReady(true);

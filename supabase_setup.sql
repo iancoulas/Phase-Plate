@@ -138,6 +138,14 @@ BEGIN
 END;
 $$;
 
+-- IMPORTANT: Supabase grants EXECUTE on new functions to PUBLIC/anon/authenticated
+-- by default. Because this is SECURITY DEFINER and takes an arbitrary p_user_id
+-- with no internal check that it matches auth.uid(), leaving those grants in place
+-- would let any client increment (and exhaust) any OTHER user's daily quota by
+-- calling the RPC directly with their user_id. Only the Edge Function's
+-- service-role client should ever call this.
+REVOKE EXECUTE ON FUNCTION increment_analyze_meal_usage(UUID) FROM PUBLIC, anon, authenticated;
+
 
 -- ── analyze-meal Edge Function ──────────────────────────────────────────────
 -- Proxies OpenAI GPT-4o Vision so the API key never ships in the client bundle.

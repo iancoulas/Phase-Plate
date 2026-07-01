@@ -1,5 +1,20 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Security check: consent-wall bypass + RPC privilege escalation
+
+Ahead of a TestFlight build, reviewed this session's cumulative changes (Edge Function, consent wall, referral flag/PDF export, rate limiting) for security issues. Found and fixed two real ones:
+
+### Fixed
+- **Consent wall could be silently skipped** (`App.tsx`) — if anything before `setShowConsent()` in `bootstrap()` threw (e.g. `ensureAnonSession()` failing on a flaky network), the `catch` block set `showOnboarding(false)` but never touched `showConsent`, which stayed at its default `false` — the user would land straight in the main app having never seen the legal wall. This is exactly the "no way to bypass" scenario VISION.md prohibits. Fixed to fail closed: the catch block now explicitly sets `showConsent(true)`.
+- **`increment_analyze_meal_usage` RPC was callable directly by any client, not just the Edge Function** — Supabase grants `EXECUTE` on new functions to `PUBLIC`/`anon`/`authenticated` by default, and since this is `SECURITY DEFINER` with no internal check that `p_user_id = auth.uid()`, any signed-in (including anonymous) user could call it directly with someone *else's* user ID to grief their daily quota before they'd made a single real call. Fixed with `REVOKE EXECUTE ... FROM PUBLIC, anon, authenticated` — only `service_role` (used internally by the Edge Function) can call it now. Verified: a direct client RPC call now returns `403 permission denied`; the legitimate Edge-Function-mediated path still returns `200` and increments correctly.
+- **Residual raw error leakage in `analyze-meal`'s outermost catch-all** — the OpenAI-specific and usage-limit error paths were already sanitized in an earlier pass, but the outer catch (parse errors, unexpected exceptions) still echoed `String(err)` to the client. Now logs server-side and returns a generic message, consistent with the other paths.
+
+### Verified
+- Applied the `REVOKE` directly to the live database via the Management API and confirmed via `information_schema.routine_privileges` that only `postgres`/`service_role` retain `EXECUTE`.
+- Redeployed `analyze-meal`; re-ran the full test suite (34/34 pass) and `tsc --noEmit` (clean) after the `App.tsx` fix.
+
+---
+
 ## 2026-07-01 — Anticipatory ad placement
 
 Implements VISION.md's Advertising Strategy: "surface the right product at the right moment in her cycle before she's in need — not after."
