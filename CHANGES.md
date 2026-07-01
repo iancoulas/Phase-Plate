@@ -1,5 +1,16 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Tighten analyze-meal to 1 free call/day + surface real error messages
+
+### Changed
+- **`analyze-meal/index.ts`** — `DAILY_CALL_LIMIT` lowered from 20 to 1. Photo nutrition logging is a free-tier feature per VISION.md's pricing table, so this caps the free daily allotment; it isn't a subscription-tier gate.
+- **`NutritionScreen.tsx`** — `analysePhoto()` now unwraps `FunctionsHttpError.context` (the raw Response) to read the actual JSON error body. Previously any non-2xx response (429 daily limit, 413 oversized image, 502 OpenAI failure) surfaced supabase-js's generic "Edge Function returned a non-2xx status code" instead of the real message — meant users would never actually see "come back tomorrow" once the limit dropped to 1/day.
+
+### Verified
+- Redeployed; confirmed live with a real anonymous session: 1st call succeeds (200), 2nd same-day call from the same user rejected (429, "Daily meal analysis limit reached. Try again tomorrow."). Test user and usage row cleaned up after.
+
+---
+
 ## 2026-07-01 — Referral flag + physician PDF export
 
 Implements the VISION.md Medical Guidance Philosophy: the app never diagnoses, but flags recurring patterns worth a doctor visit and can hand over an objective, disclaimer-headed log for that appointment.

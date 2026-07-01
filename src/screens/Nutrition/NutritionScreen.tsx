@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 
+import { FunctionsHttpError } from '@supabase/supabase-js';
 import { saveFoodLog, fetchFoodLogsForDate, FoodLog, supabase } from '../../services/supabase';
 import { useCycle } from '../../contexts/CycleContext';
 import { calculateCyclePhase } from '../../utils/cycleCalculator';
@@ -56,7 +57,18 @@ async function analysePhoto(base64: string): Promise<AnalysedFood> {
     body: { image: base64 },
   });
 
-  if (error) throw new Error(`analyze-meal error: ${error.message}`);
+  if (error) {
+    // FunctionsHttpError.message is a generic "non-2xx status code" string —
+    // the actual user-facing message (e.g. daily limit reached) is in the body.
+    let message = error.message;
+    if (error instanceof FunctionsHttpError) {
+      try {
+        const body = await error.context.json();
+        if (body?.error) message = body.error;
+      } catch { /* keep generic message */ }
+    }
+    throw new Error(message);
+  }
   if (data?.error) throw new Error(data.error);
   return data as AnalysedFood;
 }

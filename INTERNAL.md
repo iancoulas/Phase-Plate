@@ -40,7 +40,7 @@
 
 - `react-native-health-connect` — Android health data now reads via Health Connect; requires the Health Connect app on-device (bundled with OS on Android 14+, separate Play Store install before that) and a real native build (not usable in Expo Go).
 - `expo-barcode-scanner` — deprecated/removed in SDK 51+. Replaced with `expo-camera` barcodeScannerSettings (same EAN-13/UPC-A support). Don't add it back.
-- `analyze-meal` daily cap is hardcoded to 20 calls/user/day in the Edge Function source (`DAILY_CALL_LIMIT`). If a legitimate power user hits it, the fix is redeploying with a higher constant — no dashboard config exists yet.
+- `analyze-meal` daily cap is hardcoded to 1 call/user/day in the Edge Function source (`DAILY_CALL_LIMIT`) as of 2026-07-01 — intentionally tight since photo logging is a free-tier feature. Bumping it means redeploying with a new constant; no dashboard config or subscription-tier check exists yet.
 - `react-native-google-fit` fully removed 2026-07-01 (see Health Connect migration above) — the npm-audit vulnerabilities it carried are gone with it.
 - OFF data quality — Open Food Facts data is crowdsourced; values can be wrong or missing. Manual entry fallback exists.
 - Iron field — tracked as `iron_mg` in food_logs but OpenAI may not always return it. Defaults to 0 gracefully.

@@ -16,7 +16,9 @@ const MAX_IMAGE_BASE64_LENGTH = 8_000_000; // ~6MB raw
 
 // verify_jwt only confirms the caller holds *a* valid Supabase JWT (the public
 // anon key qualifies) — this is the real guard against unbounded OpenAI billing.
-const DAILY_CALL_LIMIT = 20;
+// Photo nutrition logging is a free-tier feature (VISION.md), so this caps the
+// free daily allotment rather than gating on subscription tier.
+const DAILY_CALL_LIMIT = 1;
 
 // verify_jwt already checked the signature before invoking this function, so it's
 // safe to read the "sub" claim without re-verifying — this is for usage tracking,
