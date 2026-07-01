@@ -1,5 +1,21 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Security pass on analyze-meal (rate limiting + payload cap)
+
+Reviewed the `analyze-meal` Edge Function now that it's live in production. `verify_jwt: true` only confirms the caller holds *a* valid Supabase JWT — the public anon key itself qualifies, and both it and the function URL are extractable from any shipped app bundle. Without a cap, anyone could call it in a loop and bill the project's OpenAI account indefinitely.
+
+### New
+- **`analyze_meal_usage` table + `increment_analyze_meal_usage()` RPC** (`supabase_setup.sql`) — atomic per-user daily call counter. No RLS policies defined on purpose: only the Edge Function's service-role client should ever touch it, never the app directly. Applied directly to the live DB via the Supabase Management API.
+
+### Changed
+- **`analyze-meal/index.ts`**:
+  - Rejects `image` payloads over ~6MB raw (base64 length > 8,000,000) with `413` — guards against oversized repeated-request abuse.
+  - Extracts `sub` (user id) from the caller's JWT (already signature-verified by the platform before invocation) and increments `analyze_meal_usage` via the service-role client; returns `429` past 20 calls/day for that user. DB tracking failures fail open (logged, request still proceeds) rather than blocking legitimate use on a transient outage.
+  - OpenAI error responses no longer echo raw upstream error text to the client — logged server-side, generic message returned instead.
+- Redeployed and verified live: oversized payload → `413`; real anonymous-session call → `200` with `analyze_meal_usage` row incremented to `1`; test user and row deleted after verification.
+
+---
+
 ## 2026-07-01 — Android Health Connect migration
 
 ### New

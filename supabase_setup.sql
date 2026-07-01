@@ -87,6 +87,41 @@ AND table_name IN ('menstruation_logs', 'food_logs', 'user_preferences', 'cycle_
 ORDER BY table_name;
 
 
+-- ── analyze_meal_usage ──────────────────────────────────────────────────────────
+-- Per-user daily call counter for the analyze-meal Edge Function. verify_jwt only
+-- confirms the caller holds *a* valid Supabase JWT (the public anon key qualifies),
+-- so this is the actual cost-abuse guard against unbounded OpenAI billing.
+-- No RLS policies are defined on purpose: only the Edge Function (via the
+-- service role key) should ever read/write this table, never the client directly.
+CREATE TABLE IF NOT EXISTS analyze_meal_usage (
+  user_id     UUID NOT NULL,
+  call_date   DATE NOT NULL,
+  call_count  INTEGER NOT NULL DEFAULT 0,
+  updated_at  TIMESTAMPTZ DEFAULT NOW(),
+  PRIMARY KEY (user_id, call_date)
+);
+ALTER TABLE analyze_meal_usage ENABLE ROW LEVEL SECURITY;
+
+-- Atomically increments today's call count for a user and returns the new total.
+-- SECURITY DEFINER so the Edge Function's service-role call works regardless of RLS.
+CREATE OR REPLACE FUNCTION increment_analyze_meal_usage(p_user_id UUID)
+RETURNS INTEGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  new_count INTEGER;
+BEGIN
+  INSERT INTO analyze_meal_usage (user_id, call_date, call_count, updated_at)
+  VALUES (p_user_id, CURRENT_DATE, 1, NOW())
+  ON CONFLICT (user_id, call_date)
+  DO UPDATE SET call_count = analyze_meal_usage.call_count + 1, updated_at = NOW()
+  RETURNING call_count INTO new_count;
+  RETURN new_count;
+END;
+$$;
+
+
 -- ── analyze-meal Edge Function ──────────────────────────────────────────────
 -- Proxies OpenAI GPT-4o Vision so the API key never ships in the client bundle.
 -- Source: supabase/functions/analyze-meal/index.ts

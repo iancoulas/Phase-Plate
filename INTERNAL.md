@@ -38,8 +38,8 @@
 
 - `react-native-health-connect` — Android health data now reads via Health Connect; requires the Health Connect app on-device (bundled with OS on Android 14+, separate Play Store install before that) and a real native build (not usable in Expo Go).
 - `expo-barcode-scanner` — deprecated/removed in SDK 51+. Replaced with `expo-camera` barcodeScannerSettings (same EAN-13/UPC-A support). Don't add it back.
-- `@react-native-google-fit/react-native-google-fit` scoped package — doesn't exist on npm. Use unscoped `react-native-google-fit`.
-- npm audit — 4+ moderate, 4+ high from transitive deps in react-native-google-fit. Deferred; disappears with Health Connect migration.
+- `analyze-meal` daily cap is hardcoded to 20 calls/user/day in the Edge Function source (`DAILY_CALL_LIMIT`). If a legitimate power user hits it, the fix is redeploying with a higher constant — no dashboard config exists yet.
+- `react-native-google-fit` fully removed 2026-07-01 (see Health Connect migration above) — the npm-audit vulnerabilities it carried are gone with it.
 - OFF data quality — Open Food Facts data is crowdsourced; values can be wrong or missing. Manual entry fallback exists.
 - Iron field — tracked as `iron_mg` in food_logs but OpenAI may not always return it. Defaults to 0 gracefully.
 - Duplicate-scan guard — `lastScanRef` in BarcodeScannerModal prevents same barcode firing twice. Camera-level de-dupe only; no DB dedup.
