@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { fetchOnboardingProfile, authSignOut } from '../../services/supabase';
+import { fetchOnboardingProfile, authSignOut, fetchLogsInRange } from '../../services/supabase';
 import { useCycle } from '../../contexts/CycleContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSubscription } from '../../contexts/SubscriptionContext';
 import { calculateCyclePhase } from '../../utils/cycleCalculator';
+import { detectReferralFlags } from '../../utils/referralFlag';
+import { exportPhysicianSummary } from '../../utils/physicianExport';
 import { ProfileStackParamList } from '../../types';
+
+const RECENT_LOGS_WINDOW_DAYS = 180;
 
 type Nav = StackNavigationProp<ProfileStackParamList>;
 
@@ -40,6 +44,7 @@ export default function ProfileScreen() {
   const { tier } = useSubscription();
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
+  const [exportingSummary, setExportingSummary] = useState(false);
 
   useEffect(() => {
     fetchOnboardingProfile().then(p => setOnboardingDone(!!p));
@@ -55,6 +60,23 @@ export default function ProfileScreen() {
     try { return calculateCyclePhase({ lastPeriodDate, cycleLength, periodLength }); }
     catch { return null; }
   })() : null;
+
+  async function handleExportPhysicianSummary() {
+    if (exportingSummary) return;
+    setExportingSummary(true);
+    try {
+      const end = new Date();
+      const start = new Date(end.getTime() - RECENT_LOGS_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+      const logs = await fetchLogsInRange(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
+      const flags = phase ? detectReferralFlags(logs, { lastPeriodDate, cycleLength, periodLength }, phase.phase) : [];
+      await exportPhysicianSummary(logs, flags);
+    } catch (err) {
+      console.warn('[ProfileScreen] export error:', err);
+      Alert.alert('Export failed', 'Could not generate the summary. Please try again.');
+    } finally {
+      setExportingSummary(false);
+    }
+  }
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -90,6 +112,11 @@ export default function ProfileScreen() {
             title="Health Questionnaire"
             subtitle={onboardingDone ? 'Completed' : 'Not completed yet'}
             onPress={() => navigation.navigate('Onboarding')}
+          />
+          <Row
+            title={exportingSummary ? 'Preparing…' : 'Physician Summary'}
+            subtitle="Export your recent logs as a PDF for a doctor visit"
+            onPress={handleExportPhysicianSummary}
           />
         </View>
 

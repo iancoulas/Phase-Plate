@@ -164,6 +164,17 @@ export async function fetchLogsForMonth(year: number, month: number): Promise<Me
   return data ?? [];
 }
 
+export async function fetchLogsInRange(startDate: string, endDate: string): Promise<MenstruationLog[]> {
+  const { data, error } = await supabase
+    .from('menstruation_logs')
+    .select('*')
+    .gte('log_date', startDate)
+    .lte('log_date', endDate)
+    .order('log_date', { ascending: true });
+  if (error) console.warn('[Supabase] fetchLogsInRange error:', error.message);
+  return data ?? [];
+}
+
 // ─── Food logs ────────────────────────────────────────────────────────────────
 
 export async function saveFoodLog(log: Omit<FoodLog, 'id' | 'user_id'>): Promise<FoodLog | null> {

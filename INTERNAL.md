@@ -31,6 +31,8 @@
 - [x] **Empty states** — nutrition FlatList empty text ✅; physical connect/loading states ✅; cycle phase card hidden when isDefaultData to prevent misleading default-data display
 - [x] **Period logging end-to-end** — MenstruationScreen fetches month logs from Supabase; actual logged flow days show as red dots overlaid on phase tints; sheet resets on open; calendar refreshes immediately after save
 - [x] **Onboarding cycle seeding** — Step 9 added to OnboardingScreen; collects last period date, cycle length, period length; `handleFinish` saves to `cycle_overrides` in parallel with health profile so CycleContext has real data on first launch
+- [x] **Referral flag + physician PDF export** — done 2026-07-01. `detectReferralFlags()` counts severe-cramp/low-mood/heavy-flow occurrences per current cycle phase across a 180-day log window; 3+ triggers the VISION.md "Infradian Logic Observation" banner in MenstruationScreen (dismissible, session-only). `exportPhysicianSummary()` builds a disclaimer-headed HTML → PDF via expo-print + expo-sharing's native share sheet; entry points are the banner's "Show me a summary" button and a standalone "Physician Summary" row in ProfileScreen. 5 unit tests added.
+- [ ] **Consent wall** — force-scroll + dual checkbox before Accept; required before public launch per VISION.md legal section. Not yet built.
 
 ---
 

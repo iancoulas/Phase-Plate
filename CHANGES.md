@@ -1,5 +1,23 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Referral flag + physician PDF export
+
+Implements the VISION.md Medical Guidance Philosophy: the app never diagnoses, but flags recurring patterns worth a doctor visit and can hand over an objective, disclaimer-headed log for that appointment.
+
+### New
+- **`src/utils/referralFlag.ts`** — `detectReferralFlags()`. Tracks three symptom types against `menstruation_logs`: severe cramps (`cramp_level >= 4`), low mood (`bad`/`terrible`), heavy flow (`heavy`/`very_heavy`). For each log, computes which cycle phase it fell in (via `calculateCyclePhase` with that log's own date) and counts occurrences within the user's *current* phase across all fetched history — this cross-cycle counting is what makes it "Infradian Logic" pattern detection rather than a single-cycle coincidence. Triggers at 3+ occurrences per VISION.md's spec. Each flag carries the exact "Infradian Logic Observation" alert copy and a suggested-labs list (cramp → Vitamin D, mood → TSH, flow → Full Iron Panel). 5 unit tests in `src/__tests__/referralFlag.test.ts`.
+- **`src/utils/physicianExport.ts`** — `exportPhysicianSummary()`. Builds an HTML report (disclaimer header verbatim from VISION.md, suggested-labs section, chronological symptom table) and hands it to `expo-print`'s `printToFileAsync` then `expo-sharing`'s `shareAsync` so the user gets the native share sheet (Save to Files, AirDrop, Mail, Print, etc.) — no custom viewer needed.
+- **`fetchLogsInRange()`** (`supabase.ts`) — arbitrary date-range log fetch, used by both the flag detector and the export (180-day window).
+- **MenstruationScreen** — dismissible banner rendered per active flag, showing the alert copy with "Show me a summary" (triggers the PDF export for that flag) and "Not now" (session-only dismiss, not persisted).
+- **ProfileScreen** — standalone "Physician Summary" row under MY CYCLE so users can generate the export anytime, not only when a flag fires.
+- **Dependencies**: `expo-print`, `expo-sharing`.
+
+### Notes
+- Contraception type isn't threaded through cycle phase calculation here, matching how MenstruationScreen/ProfileScreen already call `calculateCyclePhase` elsewhere in the app (defaults to `'none'`).
+- Flag dismissal is per-session component state only — reappears next visit if the underlying pattern still holds. No persisted "don't show again" yet.
+
+---
+
 ## 2026-07-01 — Security pass on analyze-meal (rate limiting + payload cap)
 
 Reviewed the `analyze-meal` Edge Function now that it's live in production. `verify_jwt: true` only confirms the caller holds *a* valid Supabase JWT — the public anon key itself qualifies, and both it and the function URL are extractable from any shipped app bundle. Without a cap, anyone could call it in a loop and bill the project's OpenAI account indefinitely.

@@ -104,8 +104,8 @@ These are not in the original 10 prompts. Track here for planning.
 - **Journal / symptom journal** — paywalled (Plus); full text journaling tied to cycle phase
 - **Recipe & meal planning** — paywalled (Plus); phase-aware meal suggestions
 - **Video Vault** — paywalled (Premium); exercise / wellness video library
-- **Physician PDF export** — export formatted symptom log for medical appointments
-- **Referral flag** — after 3 logged symptoms of the same type in one phase, surface a prompt to see a doctor
+- ~~**Physician PDF export**~~ ✅ Done 2026-07-01 — `src/utils/physicianExport.ts`, `expo-print`/`expo-sharing`, entry points in MenstruationScreen referral banner + ProfileScreen
+- ~~**Referral flag**~~ ✅ Done 2026-07-01 — `src/utils/referralFlag.ts`, `detectReferralFlags()`, 5 unit tests
 - **Anticipatory ad placement** — surface ads before the need (e.g., sleep aids entering luteal)
 - **Consent wall** — force-scroll + dual checkbox before Accept; required before public launch per legal
 

@@ -19,8 +19,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { calculateCyclePhase, CyclePhase } from '../../utils/cycleCalculator';
 import { generateMarkedDates, PHASE_COLORS } from '../../utils/cycleCalendar';
-import { saveLog, fetchLogsForMonth, MenstruationLog, FlowLevel, Mood } from '../../services/supabase';
+import { saveLog, fetchLogsForMonth, fetchLogsInRange, MenstruationLog, FlowLevel, Mood } from '../../services/supabase';
 import { useCycle } from '../../contexts/CycleContext';
+import { detectReferralFlags, ReferralFlag, SymptomType } from '../../utils/referralFlag';
+import { exportPhysicianSummary } from '../../utils/physicianExport';
+
+const RECENT_LOGS_WINDOW_DAYS = 180;
 
 const PHASE_LABELS: Record<CyclePhase, string> = {
   menstrual: 'Menstrual',
@@ -60,6 +64,9 @@ export default function MenstruationScreen() {
   const [saved, setSaved] = useState(false);
   const [monthLogs, setMonthLogs] = useState<MenstruationLog[]>([]);
   const [fetchError, setFetchError] = useState(false);
+  const [recentLogs, setRecentLogs] = useState<MenstruationLog[]>([]);
+  const [dismissedFlags, setDismissedFlags] = useState<Set<SymptomType>>(new Set());
+  const [exporting, setExporting] = useState(false);
   const slideAnim = useRef(new Animated.Value(300)).current;
 
   const cycleParams = { lastPeriodDate, cycleLength, periodLength };
@@ -79,6 +86,19 @@ export default function MenstruationScreen() {
     loadMonthLogs(viewedMonth.year, viewedMonth.month);
   }, [viewedMonth.year, viewedMonth.month, loadMonthLogs]);
 
+  const loadRecentLogs = useCallback(async () => {
+    const end = new Date();
+    const start = new Date(end.getTime() - RECENT_LOGS_WINDOW_DAYS * 24 * 60 * 60 * 1000);
+    try {
+      const logs = await fetchLogsInRange(start.toISOString().split('T')[0], end.toISOString().split('T')[0]);
+      setRecentLogs(logs);
+    } catch (err) {
+      console.warn('[MenstruationScreen] fetchLogsInRange error:', err);
+    }
+  }, []);
+
+  useEffect(() => { loadRecentLogs(); }, [loadRecentLogs]);
+
   const currentPhase = useMemo(() => {
     try {
       return calculateCyclePhase(cycleParams);
@@ -86,6 +106,23 @@ export default function MenstruationScreen() {
       return null;
     }
   }, [lastPeriodDate, cycleLength, periodLength]);
+
+  const referralFlags = useMemo<ReferralFlag[]>(() => {
+    if (!currentPhase || isDefaultData) return [];
+    return detectReferralFlags(recentLogs, cycleParams, currentPhase.phase)
+      .filter(f => !dismissedFlags.has(f.symptomType));
+  }, [recentLogs, currentPhase, isDefaultData, lastPeriodDate, cycleLength, periodLength, dismissedFlags]);
+
+  const handleExportSummary = useCallback(async (flags: ReferralFlag[]) => {
+    setExporting(true);
+    try {
+      await exportPhysicianSummary(recentLogs, flags);
+    } catch (err) {
+      console.warn('[MenstruationScreen] export error:', err);
+    } finally {
+      setExporting(false);
+    }
+  }, [recentLogs]);
 
   const markedDates = useMemo(() => {
     const base = generateMarkedDates(viewedMonth.year, viewedMonth.month, cycleParams);
@@ -136,14 +173,14 @@ export default function MenstruationScreen() {
     try {
       await saveLog({ log_date: selectedDate, cramp_level: crampLevel, mood, flow_level: flowLevel, notes });
       setSaved(true);
-      await loadMonthLogs(viewedMonth.year, viewedMonth.month);
+      await Promise.all([loadMonthLogs(viewedMonth.year, viewedMonth.month), loadRecentLogs()]);
       setTimeout(() => closeSheet(), 800);
     } catch (err) {
       console.warn('[MenstruationScreen] save error:', err);
     } finally {
       setSaving(false);
     }
-  }, [selectedDate, crampLevel, mood, flowLevel, notes, closeSheet, loadMonthLogs, viewedMonth]);
+  }, [selectedDate, crampLevel, mood, flowLevel, notes, closeSheet, loadMonthLogs, loadRecentLogs, viewedMonth]);
 
   const phaseColors = currentPhase ? PHASE_COLORS[currentPhase.phase] : PHASE_COLORS.follicular;
 
@@ -195,6 +232,30 @@ export default function MenstruationScreen() {
             <Text style={styles.errorBannerText}>Could not load logs. Tap to retry.</Text>
           </TouchableOpacity>
         )}
+
+        {/* Referral flags — Infradian Logic Observation (see VISION.md Medical Guidance Philosophy) */}
+        {referralFlags.map(flag => (
+          <View key={flag.symptomType} style={styles.referralBanner}>
+            <Text style={styles.referralText}>{flag.alertMessage}</Text>
+            <View style={styles.referralActions}>
+              <TouchableOpacity
+                style={styles.referralPrimaryBtn}
+                onPress={() => handleExportSummary([flag])}
+                disabled={exporting}
+              >
+                <Text style={styles.referralPrimaryBtnText}>
+                  {exporting ? 'Preparing…' : 'Show me a summary'}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={styles.referralDismissBtn}
+                onPress={() => setDismissedFlags(prev => new Set(prev).add(flag.symptomType))}
+              >
+                <Text style={styles.referralDismissBtnText}>Not now</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        ))}
 
         {/* Phase Legend */}
         <View style={styles.legend}>
@@ -309,6 +370,13 @@ const styles = StyleSheet.create({
   setupBannerText: { flex: 1, fontSize: 13, color: '#8B3A5A', fontWeight: '500' },
   errorBanner: { margin: 16, marginBottom: 0, backgroundColor: '#FFF3CD', borderRadius: 10, padding: 12, borderWidth: 1, borderColor: '#FFEAA7' },
   errorBannerText: { fontSize: 13, color: '#856404', textAlign: 'center', fontWeight: '500' },
+  referralBanner: { margin: 16, marginBottom: 0, backgroundColor: '#EAF2FB', borderRadius: 12, padding: 14, borderWidth: 1, borderColor: '#C7DEF2' },
+  referralText: { fontSize: 13, color: '#1F4E79', lineHeight: 19, marginBottom: 12 },
+  referralActions: { flexDirection: 'row', gap: 10 },
+  referralPrimaryBtn: { backgroundColor: '#1F4E79', borderRadius: 10, paddingVertical: 10, paddingHorizontal: 14, flex: 1, alignItems: 'center' },
+  referralPrimaryBtnText: { color: '#fff', fontWeight: '600', fontSize: 13 },
+  referralDismissBtn: { paddingVertical: 10, paddingHorizontal: 14, alignItems: 'center' },
+  referralDismissBtnText: { color: '#1F4E79', fontWeight: '500', fontSize: 13 },
   phaseCard: { margin: 16, borderRadius: 16, padding: 20 },
   phaseHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   phaseName: { fontSize: 22, fontWeight: '700' },
