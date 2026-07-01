@@ -5,7 +5,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as Linking from 'expo-linking';
 
-import { supabase, ensureAnonSession, fetchOnboardingProfile } from './src/services/supabase';
+import { supabase, ensureAnonSession, fetchOnboardingProfile, fetchConsentStatus } from './src/services/supabase';
 import { CycleProvider } from './src/contexts/CycleContext';
 import { AuthProvider } from './src/contexts/AuthContext';
 import { SubscriptionProvider, configureSubscriptions } from './src/contexts/SubscriptionContext';
@@ -13,9 +13,11 @@ import { registerHealthBackgroundSync } from './src/services/healthBackgroundSyn
 import TabNavigator from './src/navigation/TabNavigator';
 import OnboardingScreen from './src/screens/Onboarding/OnboardingScreen';
 import AuthScreen from './src/screens/Auth/AuthScreen';
+import ConsentScreen from './src/screens/Consent/ConsentScreen';
 
 export default function App() {
   const [authReady, setAuthReady] = useState(false);
+  const [showConsent, setShowConsent] = useState(false);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
@@ -26,6 +28,8 @@ export default function App() {
     async function bootstrap() {
       try {
         await ensureAnonSession();
+        const consented = await fetchConsentStatus();
+        setShowConsent(!consented);
         const profile = await fetchOnboardingProfile();
         setShowOnboarding(!profile);
       } catch (err) {
@@ -77,6 +81,18 @@ export default function App() {
   }, []);
 
   if (!authReady) return null;
+
+  // Legal consent wall — must render before anything else reaches the user.
+  // No NavigationContainer, no auth modal, nothing else mounted underneath.
+  if (showConsent) {
+    return (
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <ConsentScreen onAccept={() => setShowConsent(false)} />
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    );
+  }
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>

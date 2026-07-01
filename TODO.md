@@ -107,7 +107,7 @@ These are not in the original 10 prompts. Track here for planning.
 - ~~**Physician PDF export**~~ ✅ Done 2026-07-01 — `src/utils/physicianExport.ts`, `expo-print`/`expo-sharing`, entry points in MenstruationScreen referral banner + ProfileScreen
 - ~~**Referral flag**~~ ✅ Done 2026-07-01 — `src/utils/referralFlag.ts`, `detectReferralFlags()`, 5 unit tests
 - **Anticipatory ad placement** — surface ads before the need (e.g., sleep aids entering luteal)
-- **Consent wall** — force-scroll + dual checkbox before Accept; required before public launch per legal
+- ~~**Consent wall**~~ ✅ Built 2026-07-01 — `ConsentScreen.tsx`, gates the whole app until scroll-to-bottom + both checkboxes, recorded in `consent_records`. **The legal text itself (`legalText.ts`) is a placeholder and still needs real legal review/copy before launch.**
 
 ---
 

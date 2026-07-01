@@ -6,6 +6,7 @@
 
 ## 1. Active TODOs
 
+- [ ] **Replace placeholder consent-wall legal text before launch** — `src/screens/Consent/legalText.ts` has functional but lawyer-unreviewed General Terms/Confidentiality copy so the consent-wall mechanism could be built and tested. Must be swapped for real legal text before public launch, and `CURRENT_TERMS_VERSION` in `supabase.ts` bumped afterward so already-consented users re-consent to the real text.
 - [ ] **Remove Supabase personal access token from `.env.local`** — `supabase_access_token=sbp_...` (account-wide credential, not project-scoped) was added 2026-07-01 so Claude could deploy the `analyze-meal` Edge Function and set secrets directly. Gitignored, so it's not in git, but it's a live credential sitting on disk. Revoke it at https://supabase.com/dashboard/account/tokens and delete the line **at the next security-review pass / before public launch**
 - [ ] **Dev client rebuild** — after the SDK 53 upgrade (react-native 0.76→0.79, expo-router 4→5), any existing dev client build is stale. Rebuild with `eas build --profile development` before doing local development
 - [x] **Supabase RLS** — anonymous auth confirmed enabled (probed 2026-06-20)
@@ -32,7 +33,7 @@
 - [x] **Period logging end-to-end** — MenstruationScreen fetches month logs from Supabase; actual logged flow days show as red dots overlaid on phase tints; sheet resets on open; calendar refreshes immediately after save
 - [x] **Onboarding cycle seeding** — Step 9 added to OnboardingScreen; collects last period date, cycle length, period length; `handleFinish` saves to `cycle_overrides` in parallel with health profile so CycleContext has real data on first launch
 - [x] **Referral flag + physician PDF export** — done 2026-07-01. `detectReferralFlags()` counts severe-cramp/low-mood/heavy-flow occurrences per current cycle phase across a 180-day log window; 3+ triggers the VISION.md "Infradian Logic Observation" banner in MenstruationScreen (dismissible, session-only). `exportPhysicianSummary()` builds a disclaimer-headed HTML → PDF via expo-print + expo-sharing's native share sheet; entry points are the banner's "Show me a summary" button and a standalone "Physician Summary" row in ProfileScreen. 5 unit tests added.
-- [ ] **Consent wall** — force-scroll + dual checkbox before Accept; required before public launch per VISION.md legal section. Not yet built.
+- [x] **Consent wall** — done 2026-07-01. `ConsentScreen` gates the entire app (rendered instead of NavigationContainer, no modal to dismiss) until the user scrolls to the bottom and checks both boxes. Recorded server-side in `consent_records` (audit trail, not just a local flag) via `CURRENT_TERMS_VERSION`. **The legal text in `src/screens/Consent/legalText.ts` is placeholder only — not written or reviewed by a lawyer. Must be replaced with real Terms of Service / Confidentiality Notice text before public launch**, and `CURRENT_TERMS_VERSION` bumped once it is (forces re-consent).
 
 ---
 

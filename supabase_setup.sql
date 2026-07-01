@@ -79,6 +79,23 @@ ALTER TABLE sleep_logs ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users manage own sleep logs" ON sleep_logs FOR ALL
   USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
 
+-- ── consent_records ──────────────────────────────────────────────────────────
+-- Audit trail for the legal consent wall (VISION.md Legal/Consent section):
+-- forced-scroll + dual-checkbox acceptance, recorded per user/version so there's
+-- a real record if ever legally challenged (not just a local on-device flag).
+CREATE TABLE IF NOT EXISTS consent_records (
+  id                        UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id                   UUID REFERENCES auth.users(id) ON DELETE CASCADE DEFAULT auth.uid(),
+  terms_version             TEXT NOT NULL,
+  general_terms_accepted    BOOLEAN NOT NULL,
+  confidentiality_accepted  BOOLEAN NOT NULL,
+  accepted_at               TIMESTAMPTZ DEFAULT NOW(),
+  UNIQUE (user_id, terms_version)
+);
+ALTER TABLE consent_records ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users manage own consent records" ON consent_records FOR ALL
+  USING (auth.uid() = user_id) WITH CHECK (auth.uid() = user_id);
+
 
 -- Verify all five tables exist:
 SELECT table_name FROM information_schema.tables

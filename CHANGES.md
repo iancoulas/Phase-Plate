@@ -1,5 +1,22 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Consent wall (forced scroll + dual checkbox)
+
+Implements VISION.md's Legal/Consent section: a linear, unbypassable flow that must complete before any app content is reachable.
+
+### New
+- **`src/screens/Consent/ConsentScreen.tsx`** — full-screen (not a dismissible Modal) gate. Scrollable legal text; "Accept & Continue" stays disabled until the user has scrolled to the bottom **and** checked both boxes ("General Terms of Service" and "Confidentiality Notice" separately — the deliberate dual-checkbox "psychological speed bump" from VISION.md). Handles the edge case where the text fits on screen without scrolling (large tablet) by comparing content height to viewport height on layout, rather than relying solely on `onScroll` firing.
+- **`src/screens/Consent/legalText.ts`** — **placeholder legal text only, not reviewed by a lawyer.** Must be replaced with the real General Terms of Service and Confidentiality Notice before public launch.
+- **`consent_records` table** (`supabase_setup.sql`) — audit trail per user + terms version (`general_terms_accepted`, `confidentiality_accepted`, `accepted_at`), not just a local on-device flag, so there's an actual record if the consent flow is ever legally challenged. RLS scoped to `auth.uid() = user_id`, same pattern as every other table in this project.
+- **`fetchConsentStatus()` / `saveConsentAcceptance()`** (`supabase.ts`) — `CURRENT_TERMS_VERSION` constant; bumping it forces every user (even ones who already accepted an older version) to see the wall again.
+- **App.tsx** — `bootstrap()` now checks consent status right after `ensureAnonSession()`. If not yet accepted, `ConsentScreen` is the *only* thing rendered — no `NavigationContainer`, no auth modal, nothing else mounted underneath, so there's no path around it.
+
+### Verified
+- Applied `consent_records` table to the live DB via the Supabase Management API.
+- End-to-end tested against a real anonymous session: pre-consent read returns empty, insert succeeds, post-consent read returns the row. RLS confirmed scoping correctly. Test user and row deleted after.
+
+---
+
 ## 2026-07-01 — Tighten analyze-meal to 1 free call/day + surface real error messages
 
 ### Changed

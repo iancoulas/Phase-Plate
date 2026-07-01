@@ -331,3 +331,42 @@ export async function fetchSleepLogs(startDate: string, endDate: string): Promis
   if (error) console.warn('[Supabase] fetchSleepLogs error:', error.message);
   return data ?? [];
 }
+
+// ─── Consent wall ─────────────────────────────────────────────────────────────
+// Bump this whenever the legal text changes — a new version means every user
+// (even ones who already accepted an older version) sees the wall again.
+export const CURRENT_TERMS_VERSION = '1.0';
+
+export async function fetchConsentStatus(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+  const { data, error } = await supabase
+    .from('consent_records')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('terms_version', CURRENT_TERMS_VERSION)
+    .maybeSingle();
+  if (error) {
+    console.warn('[Supabase] fetchConsentStatus error:', error.message);
+    return false;
+  }
+  return !!data;
+}
+
+export async function saveConsentAcceptance(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  const { error } = await supabase.from('consent_records').upsert(
+    {
+      user_id: user?.id,
+      terms_version: CURRENT_TERMS_VERSION,
+      general_terms_accepted: true,
+      confidentiality_accepted: true,
+    },
+    { onConflict: 'user_id,terms_version' }
+  );
+  if (error) {
+    console.warn('[Supabase] saveConsentAcceptance error:', error.message);
+    return false;
+  }
+  return true;
+}
