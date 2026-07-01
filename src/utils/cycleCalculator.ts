@@ -18,6 +18,10 @@ const HORMONAL_TYPES: ContraceptionType[] = [
   'injection',
 ];
 
+export function isHormonalContraception(contraception?: ContraceptionType): boolean {
+  return HORMONAL_TYPES.includes(contraception ?? 'none');
+}
+
 export interface CyclePhaseResult {
   phase: CyclePhase;
   dayOfCycle: number;
@@ -104,7 +108,7 @@ export function calculateCyclePhase(params: {
   nextPeriodDate.setDate(start.getDate() + cyclesElapsed * cycleLength);
 
   const ovulationDay = cycleLength - 14;
-  const isHormonal = HORMONAL_TYPES.includes(contraception ?? 'none');
+  const isHormonal = isHormonalContraception(contraception);
 
   let phase: CyclePhase;
   let lastDayOfPhase: number;

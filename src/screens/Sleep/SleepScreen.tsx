@@ -17,6 +17,10 @@ import type { DateData } from 'react-native-calendars/src/types';
 import { Ionicons } from '@expo/vector-icons';
 
 import { saveSleepLog, fetchSleepLogs, SleepLog, EnergyLevel } from '../../services/supabase';
+import { useCycle } from '../../contexts/CycleContext';
+import { calculateCyclePhase } from '../../utils/cycleCalculator';
+import { getActiveAd } from '../../utils/anticipatoryAds';
+import AnticipatoryAdCard from '../../components/AnticipatoryAdCard';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -211,6 +215,17 @@ const ENERGY_OPTIONS: { key: EnergyLevel; label: string }[] = [
 export default function SleepScreen() {
   const now = new Date();
   const today = toDateString(now);
+  const { lastPeriodDate, cycleLength, periodLength, isDefaultData } = useCycle();
+
+  const activeAd = useMemo(() => {
+    if (isDefaultData) return null;
+    try {
+      const currentPhase = calculateCyclePhase({ lastPeriodDate, cycleLength, periodLength });
+      return getActiveAd('sleep', currentPhase);
+    } catch {
+      return null;
+    }
+  }, [isDefaultData, lastPeriodDate, cycleLength, periodLength]);
 
   const [viewedMonth, setViewedMonth] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
   const [monthLogs, setMonthLogs] = useState<SleepLog[]>([]);
@@ -331,6 +346,9 @@ export default function SleepScreen() {
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView contentContainerStyle={styles.scroll}>
         <Text style={styles.heading}>Sleep & Energy</Text>
+
+        {/* Anticipatory ad — surfaced a few days before the need arises (VISION.md) */}
+        {activeAd && <AnticipatoryAdCard ad={activeAd} />}
 
         {/* Calendar */}
         <View style={styles.calendarCard}>

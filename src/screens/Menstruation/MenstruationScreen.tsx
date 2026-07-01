@@ -23,6 +23,8 @@ import { saveLog, fetchLogsForMonth, fetchLogsInRange, MenstruationLog, FlowLeve
 import { useCycle } from '../../contexts/CycleContext';
 import { detectReferralFlags, ReferralFlag, SymptomType } from '../../utils/referralFlag';
 import { exportPhysicianSummary } from '../../utils/physicianExport';
+import { getActiveAd } from '../../utils/anticipatoryAds';
+import AnticipatoryAdCard from '../../components/AnticipatoryAdCard';
 
 const RECENT_LOGS_WINDOW_DAYS = 180;
 
@@ -112,6 +114,11 @@ export default function MenstruationScreen() {
     return detectReferralFlags(recentLogs, cycleParams, currentPhase.phase)
       .filter(f => !dismissedFlags.has(f.symptomType));
   }, [recentLogs, currentPhase, isDefaultData, lastPeriodDate, cycleLength, periodLength, dismissedFlags]);
+
+  const activeAd = useMemo(() => {
+    if (!currentPhase || isDefaultData) return null;
+    return getActiveAd('menstruation', currentPhase);
+  }, [currentPhase, isDefaultData]);
 
   const handleExportSummary = useCallback(async (flags: ReferralFlag[]) => {
     setExporting(true);
@@ -208,6 +215,9 @@ export default function MenstruationScreen() {
             </Text>
           </View>
         )}
+
+        {/* Anticipatory ad — surfaced a few days before the need arises (VISION.md) */}
+        {activeAd && <AnticipatoryAdCard ad={activeAd} />}
 
         {/* First-run setup prompt */}
         {isDefaultData && (

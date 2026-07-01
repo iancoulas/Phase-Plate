@@ -106,7 +106,7 @@ These are not in the original 10 prompts. Track here for planning.
 - **Video Vault** — paywalled (Premium); exercise / wellness video library
 - ~~**Physician PDF export**~~ ✅ Done 2026-07-01 — `src/utils/physicianExport.ts`, `expo-print`/`expo-sharing`, entry points in MenstruationScreen referral banner + ProfileScreen
 - ~~**Referral flag**~~ ✅ Done 2026-07-01 — `src/utils/referralFlag.ts`, `detectReferralFlags()`, 5 unit tests
-- **Anticipatory ad placement** — surface ads before the need (e.g., sleep aids entering luteal)
+- ~~**Anticipatory ad placement**~~ ✅ Timing engine + house content built 2026-07-01 — `src/utils/anticipatoryAds.ts`, wired into all 4 quadrant screens. **Still needed:** a real ad network account (no accounts exist yet) to replace the placeholder `AD_CONTENT`; "localized class ads" (location-based, separate mechanism) not built.
 - ~~**Consent wall**~~ ✅ Built 2026-07-01 — `ConsentScreen.tsx`, gates the whole app until scroll-to-bottom + both checkboxes, recorded in `consent_records`. **The legal text itself (`legalText.ts`) is a placeholder and still needs real legal review/copy before launch.**
 
 ---

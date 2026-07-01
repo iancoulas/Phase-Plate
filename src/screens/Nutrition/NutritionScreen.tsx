@@ -21,7 +21,9 @@ import { FunctionsHttpError } from '@supabase/supabase-js';
 import { saveFoodLog, fetchFoodLogsForDate, FoodLog, supabase } from '../../services/supabase';
 import { useCycle } from '../../contexts/CycleContext';
 import { calculateCyclePhase } from '../../utils/cycleCalculator';
+import { getActiveAd } from '../../utils/anticipatoryAds';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
+import AnticipatoryAdCard from '../../components/AnticipatoryAdCard';
 
 interface AnalysedFood {
   meal_name: string;
@@ -76,12 +78,12 @@ async function analysePhoto(base64: string): Promise<AnalysedFood> {
 export default function NutritionScreen() {
   const today = new Date().toISOString().split('T')[0];
   const { lastPeriodDate, cycleLength, periodLength, isDefaultData } = useCycle();
-  const phaseHint = !isDefaultData ? (() => {
-    try {
-      const result = calculateCyclePhase({ lastPeriodDate, cycleLength, periodLength });
-      return { phase: result.phase, tip: result.nutritionTips[0] };
-    } catch { return null; }
+  const currentPhaseResult = !isDefaultData ? (() => {
+    try { return calculateCyclePhase({ lastPeriodDate, cycleLength, periodLength }); }
+    catch { return null; }
   })() : null;
+  const phaseHint = currentPhaseResult ? { phase: currentPhaseResult.phase, tip: currentPhaseResult.nutritionTips[0] } : null;
+  const activeAd = currentPhaseResult ? getActiveAd('nutrition', currentPhaseResult) : null;
   const [logs, setLogs] = useState<FoodLog[]>([]);
   const [analysing, setAnalysing] = useState(false);
   const [analysed, setAnalysed] = useState<AnalysedFood | null>(null);
@@ -170,6 +172,9 @@ export default function NutritionScreen() {
           <Text style={styles.hintTip}>{phaseHint.tip}</Text>
         </View>
       )}
+
+      {/* Anticipatory ad — surfaced a few days before the need arises (VISION.md) */}
+      {activeAd && <AnticipatoryAdCard ad={activeAd} />}
 
       {/* Daily nutrition summary */}
       <View style={styles.totalCard}>

@@ -1,5 +1,21 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Anticipatory ad placement
+
+Implements VISION.md's Advertising Strategy: "surface the right product at the right moment in her cycle before she's in need — not after."
+
+### New
+- **`src/utils/anticipatoryAds.ts`** — `getActiveAd(quadrant, currentPhase, contraception?)`. House/placeholder content per quadrant (no real ad network account exists yet — this is the anticipatory-*timing* engine, swap `AD_CONTENT` for real sponsored placements once one is set up): pain relief + period products anticipating menstrual (Menstruation, 2-day window); sleep/energy supplements + spa anticipating luteal (Sleep, 2-day window); iron + grocery delivery anticipating luteal (Nutrition, 3-day window, matching the existing "increase iron over the next 3 days" nutrition-tip copy); topical/recovery products anticipating menstrual (Physical, 2-day window). Determines "the phase immediately preceding the target phase" per contraception type (hormonal collapses ovulatory) so the window computes correctly whether or not ovulatory occurs. Deliberately returns `null` once the target phase itself has arrived — VISION.md is explicit that this is anticipatory, not reactive ("Midol before cramping begins — not during"). 6 unit tests.
+- **`src/components/AnticipatoryAdCard.tsx`** — small "Suggested for you" card, same visual weight as the existing phase-aware hint banners, no fake CTA button (no real affiliate/purchase link exists to point it at).
+- **`isHormonalContraception()`** exported from `cycleCalculator.ts` (previously a private `HORMONAL_TYPES` check) so the ad logic and the phase calculator share one source of truth.
+- Wired into all 4 quadrant screens: MenstruationScreen, SleepScreen, NutritionScreen, PhysicalScreen. Sleep and Physical didn't previously read `CycleContext` — added.
+
+### Deferred (not built)
+- **"Localized class ads"** (VISION.md Physical Wellness section — "the classes find them") is a different mechanism (location-based business discovery), not cycle-anticipatory logic. Out of scope for this pass.
+- Actual ad network integration (a real account, ad unit IDs, iOS App Tracking Transparency prompt) — everything here is house/placeholder content.
+
+---
+
 ## 2026-07-01 — Consent wall (forced scroll + dual checkbox)
 
 Implements VISION.md's Legal/Consent section: a linear, unbypassable flow that must complete before any app content is reachable.
