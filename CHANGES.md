@@ -1,5 +1,11 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — TestFlight build 25 submitted
+
+`eas build --profile production --platform ios --auto-submit` — build succeeded and was auto-submitted to App Store Connect (build ID `12298883-7972-4ed0-b7be-39ca8c0a0072`, submission ID `0611bd75-cf53-4db6-b742-19521e0030fc`). Bundles everything from today's session: OpenAI Edge Function migration, Android Health Connect, analyze-meal rate limiting + security fixes, referral flag + physician PDF export, consent wall, anticipatory ad placement. Apple typically takes 5–10 minutes to finish processing before it appears in TestFlight.
+
+---
+
 ## 2026-07-01 — Security check: consent-wall bypass + RPC privilege escalation
 
 Ahead of a TestFlight build, reviewed this session's cumulative changes (Edge Function, consent wall, referral flag/PDF export, rate limiting) for security issues. Found and fixed two real ones:

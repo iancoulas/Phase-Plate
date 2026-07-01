@@ -114,8 +114,12 @@ These are not in the original 10 prompts. Track here for planning.
 ## Build state summary
 
 ```
-Last TestFlight build:  1.0.0 (build 24)  — prev session's fixes shipped
-Current code state:     sleep calendar added, clean TS, needs new build
-Next build should be:   build 25 (autoIncrement handles it)
+Last TestFlight build:  1.0.0 (build 25) — submitted 2026-07-01, processing on Apple's side
+Build ID:               12298883-7972-4ed0-b7be-39ca8c0a0072
+Submission ID:          0611bd75-cf53-4db6-b742-19521e0030fc
+Shipped in build 25:    OpenAI Edge Function migration, Android Health Connect, analyze-meal
+                        rate limiting + security hardening, referral flag + physician PDF
+                        export, consent wall, anticipatory ad placement
+Current code state:     clean TS, all tests passing, nothing pending since last build
 EAS image:              macos-sequoia-15.6-xcode-26.0  (do not change)
 ```
