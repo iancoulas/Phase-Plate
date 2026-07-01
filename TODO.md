@@ -23,7 +23,7 @@ Generated 2026-07-01. Cross-references the original 10 build prompts against cur
 
 ## Also built (beyond original prompts)
 
-- **Sleep & Energy screen** — full implementation: drum time picker, quality 1-5, energy chips, 7-day history, Supabase `sleep_logs` table
+- **Sleep & Energy screen** — full implementation: drum time picker, quality 1-5, energy chips, Supabase `sleep_logs` table; monthly calendar with quality colour-coding; past-date entry by tapping any calendar day
 - **Auth system** — anonymous → email upgrade flow, sign in, sign out + restore anon session
 - **CycleContext + CycleSettingsScreen** — cycle params load from DB, `isDefaultData` flag
 - **ProfileScreen** — cycle summary card, account section, sign in/out
@@ -114,8 +114,8 @@ These are not in the original 10 prompts. Track here for planning.
 ## Build state summary
 
 ```
-Last TestFlight build:  1.0.0 (build 21)  — missing this session's fixes
-Current code state:     all fixes committed on main, clean TS, no test failures
-Next build should be:   1.0.1 (bump version in app.config.js before building)
+Last TestFlight build:  1.0.0 (build 24)  — prev session's fixes shipped
+Current code state:     sleep calendar added, clean TS, needs new build
+Next build should be:   build 25 (autoIncrement handles it)
 EAS image:              macos-sequoia-15.6-xcode-26.0  (do not change)
 ```

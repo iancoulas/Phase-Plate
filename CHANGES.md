@@ -1,5 +1,14 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Sleep history calendar + past-date entry
+
+### New
+- **Sleep history calendar** (`src/screens/Sleep/SleepScreen.tsx`) — replaced the 7-day list with a full monthly calendar. Days with logged sleep are colour-coded by quality (1 = coral red, 2 = warm orange, 3 = sky blue, 4 = medium blue, 5 = deep navy). When no quality rating is stored, colour falls back to sleep duration (<6h orange, 6-7.5h light blue, 7.5h+ medium blue). A five-swatch legend below the calendar explains the scale.
+- **Past-date entry** — any past day on the calendar is tappable. Tapping selects the day and shows a summary card beneath the calendar. Tapping "Log Sleep" or "Edit Entry" on that card opens the full log sheet pre-filled with that day's existing data (or blank defaults for a new entry). Saves upsert to `log_date` = selected date, not hardcoded today. Future dates are blocked (`maxDate`).
+- **Month navigation** — data loads per viewed month via the calendar's `onMonthChange` callback; navigating back/forward fetches the appropriate date range from `fetchSleepLogs`.
+
+---
+
 ## 2026-07-01 — Paywall wired + theme.ts
 
 ### New
