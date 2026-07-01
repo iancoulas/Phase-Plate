@@ -21,11 +21,7 @@ let AppleHealthKit: {
   getSamples: (opts: object, cb: (err: unknown, results: Array<{ activityName: string; duration: number; startDate: string }>) => void) => void;
 } | null = null;
 
-let GoogleFit: {
-  authorize: (opts: object) => Promise<{ success: boolean }>;
-  getDailyStepCountSamples: (opts: object) => Promise<Array<{ steps: Array<{ date: string; value: number }> }>>;
-  getDailyCalorieSamples: (opts: object) => Promise<Array<{ calorie: number }>>;
-} | null = null;
+let HealthConnect: typeof import('react-native-health-connect') | null = null;
 
 if (Platform.OS === 'ios') {
   try {
@@ -33,7 +29,7 @@ if (Platform.OS === 'ios') {
   } catch { /* not linked */ }
 } else {
   try {
-    GoogleFit = require('react-native-google-fit').default;
+    HealthConnect = require('react-native-health-connect');
   } catch { /* not linked */ }
 }
 
@@ -51,12 +47,17 @@ export async function requestHealthPermissions(): Promise<boolean> {
       AppleHealthKit!.initHealthKit(HK_PERMS, (err) => resolve(!err));
     });
   } else {
-    if (!GoogleFit) return false;
+    if (!HealthConnect) return false;
     try {
-      const result = await GoogleFit.authorize({
-        scopes: ['FITNESS_ACTIVITY_READ', 'FITNESS_BODY_READ'],
-      });
-      return result.success;
+      const isInitialized = await HealthConnect.initialize();
+      if (!isInitialized) return false;
+      const granted = await HealthConnect.requestPermission([
+        { accessType: 'read', recordType: 'Steps' },
+        { accessType: 'read', recordType: 'ActiveCaloriesBurned' },
+        { accessType: 'read', recordType: 'RestingHeartRate' },
+        { accessType: 'read', recordType: 'ExerciseSession' },
+      ]);
+      return granted.length > 0;
     } catch {
       return false;
     }
@@ -104,8 +105,48 @@ async function fetchIOSStats(): Promise<Partial<HealthStats>> {
 }
 
 async function fetchAndroidStats(): Promise<Partial<HealthStats>> {
-  // Google Fit API was sunset 2025-06-30. Returns zeros until Health Connect migration.
-  return { steps: null, activeCalories: null, restingHR: null, lastWorkout: null, permissionsGranted: false };
+  const empty: Partial<HealthStats> = { steps: null, activeCalories: null, restingHR: null, lastWorkout: null, permissionsGranted: false };
+  if (!HealthConnect) return empty;
+
+  try {
+    const isInitialized = await HealthConnect.initialize();
+    if (!isInitialized) return empty;
+
+    const today = new Date();
+    const startOfDay = new Date(today.setHours(0, 0, 0, 0)).toISOString();
+    const now = new Date().toISOString();
+
+    const stepsResult = await HealthConnect.readRecords('Steps', {
+      timeRangeFilter: { operator: 'between', startTime: startOfDay, endTime: now },
+    });
+    const steps = stepsResult.records.reduce((sum, r) => sum + r.count, 0);
+
+    const caloriesResult = await HealthConnect.readRecords('ActiveCaloriesBurned', {
+      timeRangeFilter: { operator: 'between', startTime: startOfDay, endTime: now },
+    });
+    const activeCalories = caloriesResult.records.reduce((sum, r) => sum + r.energy.inKilocalories, 0);
+
+    const hrResult = await HealthConnect.readRecords('RestingHeartRate', {
+      timeRangeFilter: { operator: 'between', startTime: startOfDay, endTime: now },
+    });
+    const restingHR = hrResult.records.length ? hrResult.records[hrResult.records.length - 1].beatsPerMinute : null;
+
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+    const exerciseResult = await HealthConnect.readRecords('ExerciseSession', {
+      timeRangeFilter: { operator: 'between', startTime: sevenDaysAgo, endTime: now },
+    });
+    const lastWorkout = exerciseResult.records.length
+      ? (() => {
+          const w = exerciseResult.records[exerciseResult.records.length - 1];
+          const durationSeconds = (new Date(w.endTime).getTime() - new Date(w.startTime).getTime()) / 1000;
+          return { name: w.title ?? 'Workout', duration: durationSeconds, date: new Date(w.startTime) };
+        })()
+      : null;
+
+    return { steps, activeCalories, restingHR, lastWorkout, permissionsGranted: true };
+  } catch {
+    return empty;
+  }
 }
 
 export async function fetchTodayStats(): Promise<HealthStats> {

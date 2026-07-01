@@ -50,6 +50,10 @@ module.exports = {
         'android.permission.RECEIVE_BOOT_COMPLETED',
         'android.permission.VIBRATE',
         'android.permission.POST_NOTIFICATIONS',
+        'android.permission.health.READ_STEPS',
+        'android.permission.health.READ_ACTIVE_CALORIES_BURNED',
+        'android.permission.health.READ_HEART_RATE',
+        'android.permission.health.READ_EXERCISE',
       ],
     },
     web: {
@@ -78,6 +82,17 @@ module.exports = {
           permissions: {
             read: ['StepCount', 'ActiveEnergyBurned', 'RestingHeartRate', 'HeartRate', 'Workout'],
             write: [],
+          },
+        },
+      ],
+      'react-native-health-connect',
+      [
+        'expo-build-properties',
+        {
+          android: {
+            compileSdkVersion: 35,
+            targetSdkVersion: 35,
+            minSdkVersion: 26,
           },
         },
       ],

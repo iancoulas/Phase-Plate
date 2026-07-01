@@ -17,12 +17,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
 
-import { saveFoodLog, fetchFoodLogsForDate, FoodLog } from '../../services/supabase';
+import { saveFoodLog, fetchFoodLogsForDate, FoodLog, supabase } from '../../services/supabase';
 import { useCycle } from '../../contexts/CycleContext';
 import { calculateCyclePhase } from '../../utils/cycleCalculator';
 import BarcodeScannerModal from '../../components/BarcodeScannerModal';
-
-const OPENAI_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY ?? '';
 
 interface AnalysedFood {
   meal_name: string;
@@ -54,39 +52,13 @@ function PulsingLoader() {
 }
 
 async function analysePhoto(base64: string): Promise<AnalysedFood> {
-  const response = await fetch('https://api.openai.com/v1/chat/completions', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${OPENAI_KEY}`,
-    },
-    body: JSON.stringify({
-      model: 'gpt-4o',
-      max_tokens: 400,
-      messages: [
-        {
-          role: 'user',
-          content: [
-            {
-              type: 'text',
-              text: `You are a nutrition expert. Analyse this food photo and return ONLY valid JSON with these fields: meal_name (string), calories (integer), protein_g (number), carbs_g (number), fat_g (number), fiber_g (number), iron_mg (number), confidence ("high"|"medium"|"low"). Estimate for a single serving. No markdown, no extra text.`,
-            },
-            { type: 'image_url', image_url: { url: `data:image/jpeg;base64,${base64}`, detail: 'low' } },
-          ],
-        },
-      ],
-    }),
+  const { data, error } = await supabase.functions.invoke('analyze-meal', {
+    body: { image: base64 },
   });
 
-  if (!response.ok) {
-    const err = await response.text();
-    throw new Error(`OpenAI error ${response.status}: ${err}`);
-  }
-
-  const json = await response.json();
-  const content: string = json.choices[0].message.content.trim();
-  const cleaned = content.replace(/```json\n?|```/g, '').trim();
-  return JSON.parse(cleaned) as AnalysedFood;
+  if (error) throw new Error(`analyze-meal error: ${error.message}`);
+  if (data?.error) throw new Error(data.error);
+  return data as AnalysedFood;
 }
 
 export default function NutritionScreen() {

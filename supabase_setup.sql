@@ -85,3 +85,11 @@ SELECT table_name FROM information_schema.tables
 WHERE table_schema = 'public'
 AND table_name IN ('menstruation_logs', 'food_logs', 'user_preferences', 'cycle_overrides', 'sleep_logs')
 ORDER BY table_name;
+
+
+-- ── analyze-meal Edge Function ──────────────────────────────────────────────
+-- Proxies OpenAI GPT-4o Vision so the API key never ships in the client bundle.
+-- Source: supabase/functions/analyze-meal/index.ts
+-- Deploy (run from repo root, requires Supabase CLI logged in and project linked):
+--   supabase secrets set OPENAI_API_KEY=sk-...
+--   supabase functions deploy analyze-meal

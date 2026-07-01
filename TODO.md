@@ -71,15 +71,15 @@ Dashboard → Authentication → URL Configuration:
 
 ---
 
-**PROMPT 2 — Move OpenAI key to Supabase Edge Function**
+**PROMPT 2 — Move OpenAI key to Supabase Edge Function** ✅ Done 2026-07-01
 
-> The OpenAI API key is currently `EXPO_PUBLIC_OPENAI_API_KEY` which ships in the JS bundle. Before App Store launch this must move server-side. Create a Supabase Edge Function at `supabase/functions/analyze-meal/index.ts` that accepts a base64 image, calls OpenAI GPT-4o Vision, and returns the parsed nutrition JSON. Update `NutritionScreen.tsx` to call the Edge Function via `supabase.functions.invoke('analyze-meal', { body: { image: base64 } })` instead of calling OpenAI directly. Remove `EXPO_PUBLIC_OPENAI_API_KEY` from `.env.local` and `app.config.js`. Set `OPENAI_API_KEY` as a Supabase secret instead (`supabase secrets set OPENAI_API_KEY=...`). Update `supabase_setup.sql` to include the Edge Function deploy command. Keep the existing error handling and loading state in the screen unchanged.
+> Code complete: `supabase/functions/analyze-meal/index.ts` created, `NutritionScreen.tsx` now calls it via `supabase.functions.invoke`, key removed from client env files, `supabase_setup.sql` has deploy notes. **Remaining (user task, needs Supabase CLI):** `supabase secrets set OPENAI_API_KEY=...` then `supabase functions deploy analyze-meal` — the key value is preserved in `.env.local` under `OPENAI_API_KEY` for this purpose. Also remove `EXPO_PUBLIC_OPENAI_API_KEY` from EAS Secrets dashboard.
 
 ---
 
-**PROMPT 3 — Android Health Connect migration**
+**PROMPT 3 — Android Health Connect migration** ✅ Done 2026-07-01
 
-> `react-native-google-fit` returns null for all health stats since Google Fit was sunset June 2025. Migrate the Android path in `src/services/healthKitService.ts` to use `react-native-health-connect`. Install the package. In `fetchAndroidStats()`: replace all `react-native-google-fit` calls with Health Connect equivalents — `StepsRecord` for steps, `ActiveCaloriesBurnedRecord` for calories, `RestingHeartRateRecord` for resting HR. Update `requestHealthPermissions()` to request Health Connect permissions on Android. Keep the `HealthStats` interface and all iOS code unchanged. Update `app.config.js` with the Health Connect plugin if required. Test that the unified `fetchTodayStats()` still returns the same interface on both platforms.
+> Code complete: `react-native-health-connect` installed, `react-native-google-fit` removed. `fetchAndroidStats()`/`requestHealthPermissions()` in `healthKitService.ts` rewritten around `initialize()`/`requestPermission()`/`readRecords()`. `app.config.js` has the Health Connect + `expo-build-properties` (minSdk 26) plugins and the four `android.permission.health.*` manifest permissions. `HealthStats` interface and iOS path untouched; TypeScript clean. **Needs:** a new Android dev/production build (native change, not testable in Expo Go or on the current build), and — before Android goes live on Play Store — Google's Health Connect permissions declaration form (1–2 week approval + propagation).
 
 ---
 

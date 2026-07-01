@@ -14,3 +14,4 @@ web-build/
 .env*.local
 android/
 ios/
+supabase/.temp/

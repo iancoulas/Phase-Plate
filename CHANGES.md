@@ -1,5 +1,43 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Android Health Connect migration
+
+### New
+- **`react-native-health-connect@3.5.3`** — replaces `react-native-google-fit` (broken since Google Fit sunset June 2025, was returning nulls for all Android health stats).
+- **`expo-build-properties`** — added to plugins to raise Android `compileSdkVersion`/`targetSdkVersion` to 35 and `minSdkVersion` to 26 (required by Health Connect).
+
+### Changed
+- **`healthKitService.ts`** — `fetchAndroidStats()` rewritten: `initialize()` → `readRecords('Steps'|'ActiveCaloriesBurned'|'RestingHeartRate'|'ExerciseSession', { timeRangeFilter })`. Steps summed from records in range; calories summed via `energy.inKilocalories`; resting HR takes the most recent sample; last workout derived from the most recent `ExerciseSession` record (title + computed duration from start/end time). `requestHealthPermissions()` Android branch now calls `HealthConnect.initialize()` + `requestPermission()` with `Steps`/`ActiveCaloriesBurned`/`RestingHeartRate`/`ExerciseSession` read scopes. `HealthStats` interface and iOS path unchanged — `fetchTodayStats()` still returns the same shape on both platforms.
+- **`app.config.js`** — added `android.permissions` entries for `android.permission.health.READ_STEPS`, `READ_ACTIVE_CALORIES_BURNED`, `READ_HEART_RATE`, `READ_EXERCISE`. Added `react-native-health-connect` (config plugin auto-detected via its `app.plugin.js`) and `expo-build-properties` to the `plugins` array.
+- **`package.json`** — removed `react-native-google-fit`; doctor's `reactNativeDirectoryCheck.exclude` now lists `react-native-health` and `react-native-health-connect` instead.
+
+### Notes
+- Health Connect app must be installed on the user's Android device (part of the OS on Android 14+, a separate Play Store app before that).
+- Native change — requires a new development/production Android build to take effect; not testable in Expo Go.
+- Play Store submission needs Google's Health Connect [permissions declaration form](https://docs.google.com/forms/d/1LFjbq1MOCZySpP5eIVkoyzXTanpcGTYQH26lKcrQUJo/viewform) — approval + whitelist propagation can take 1–2 weeks combined. Not urgent since iOS is the launch priority, but must happen before Android goes live.
+
+---
+
+## 2026-07-01 — OpenAI key moved server-side (Supabase Edge Function)
+
+### New
+- **`supabase/functions/analyze-meal/index.ts`** — Deno Edge Function that proxies the GPT-4o Vision call. Accepts `{ image: base64 }`, returns the same `AnalysedFood` JSON shape the client expects.
+- **`supabase/functions/_shared/cors.ts`** — shared CORS headers helper for edge functions.
+
+### Changed
+- **`NutritionScreen.tsx`** — `analysePhoto()` now calls `supabase.functions.invoke('analyze-meal', { body: { image: base64 } })` instead of hitting `api.openai.com` directly. `OPENAI_KEY`/`EXPO_PUBLIC_OPENAI_API_KEY` constant removed from the client.
+- **`.env.local`** — `EXPO_PUBLIC_OPENAI_API_KEY` renamed to `OPENAI_API_KEY` (no `EXPO_PUBLIC_` prefix, so Expo no longer inlines it into the JS bundle). Value kept locally only so it can be copied into `supabase secrets set`.
+- **`.env.local.example`** — removed the OpenAI key line entirely (no longer a client-side var).
+- **`supabase_setup.sql`** — added deploy notes (`supabase secrets set OPENAI_API_KEY=...` then `supabase functions deploy analyze-meal`).
+- **`tsconfig.json`** — excluded `supabase/functions` from the app's TS project (Deno runtime globals like `Deno.serve` aren't available in the RN/Expo type environment).
+
+### Still needed (user tasks, not code)
+- Run `supabase secrets set OPENAI_API_KEY=...` and `supabase functions deploy analyze-meal` (requires Supabase CLI installed + project linked — not available in this sandbox).
+- Remove `EXPO_PUBLIC_OPENAI_API_KEY` from EAS Secrets dashboard (expo.dev → project → Secrets) since it's no longer read anywhere.
+- New EAS build not required for this change alone — it's a pure JS/edge-function change, no native binary impact. Still bundled with the pending build for the other queued fixes.
+
+---
+
 ## 2026-07-01 — Sleep history calendar + past-date entry
 
 ### New

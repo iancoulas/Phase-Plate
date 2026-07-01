@@ -6,13 +6,14 @@
 
 ## 1. Active TODOs
 
+- [ ] **Remove Supabase personal access token from `.env.local`** — `supabase_access_token=sbp_...` (account-wide credential, not project-scoped) was added 2026-07-01 so Claude could deploy the `analyze-meal` Edge Function and set secrets directly. Gitignored, so it's not in git, but it's a live credential sitting on disk. Revoke it at https://supabase.com/dashboard/account/tokens and delete the line **at the next security-review pass / before public launch**
 - [ ] **Dev client rebuild** — after the SDK 53 upgrade (react-native 0.76→0.79, expo-router 4→5), any existing dev client build is stale. Rebuild with `eas build --profile development` before doing local development
 - [x] **Supabase RLS** — anonymous auth confirmed enabled (probed 2026-06-20)
 - [x] **user_preferences table** — confirmed exists (probed 2026-06-20)
 - [x] **cycle_overrides table** — created and confirmed 2026-06-20 (DDL in supabase_setup.sql)
-- [ ] **OpenAI key exposure** — currently EXPO_PUBLIC_* (ships in bundle). Move to Supabase Edge Function before App Store release
+- [x] **OpenAI key exposure** — moved to `supabase/functions/analyze-meal` Edge Function 2026-07-01; `NutritionScreen.tsx` calls it via `supabase.functions.invoke`. Key removed from client bundle. **User must still run** `supabase secrets set OPENAI_API_KEY=...` + `supabase functions deploy analyze-meal` (value preserved in `.env.local`), then remove old `EXPO_PUBLIC_OPENAI_API_KEY` from EAS Secrets dashboard
 - [ ] **RevenueCat dashboard config** — products, entitlements ("plus", "premium"), offerings not yet created
-- [ ] **PaywallScreen not wired into nav** — no entry point yet; has onClose prop ready for modal presentation
+- [x] **PaywallScreen wired into nav** — added to ProfileStackNavigator + Profile tab SUBSCRIPTION section 2026-07-01
 - [x] **User login & profile saving** — AuthContext + AuthScreen + authSignOut added 2026-06-30; Profile tab ACCOUNT section; "Create Account" upgrades anon → real via Supabase updateUser (data preserved); "Sign In" via signInWithPassword; onboarding escape hatch on step 0 for returning users on new devices
 - [x] **Sleep log v1** — SleepScreen has bedtime/wake drum pickers (per-minute, iOS wheel-scroll style), quality 1-5, energy chips, notes, today card + 7-day history; sleep_logs table DDL now in supabase_setup.sql — **must be run in Supabase SQL Editor if not done yet**
 - [x] **CycleSettings calendar picker** — last period date now uses inline Calendar from react-native-calendars (same import as MenstruationScreen); future dates blocked via maxDate
@@ -20,7 +21,7 @@
 - [x] **Deep linking for email confirmation** — scheme registered in app.config.js; handleAuthUrl in App.tsx parses hash fragment and calls setSession; requires new EAS build to take effect
 - [ ] **HealthKit entitlement** — needs Apple Developer → Identifiers → Health entitlement enabled for bundle ID (separate from code — must be done in the portal)
 - [ ] **Replace placeholder icons** — assets/icon.png etc. are solid-colour placeholder PNGs; replace with real branded artwork before public App Store launch
-- [ ] **Google Cloud Fitness API** — was sunset 2025-06-30; Android health data broken until Health Connect migration
+- [x] **Google Cloud Fitness API sunset → Health Connect migration** — done 2026-07-01. `react-native-google-fit` removed; `healthKitService.ts` Android path now uses `react-native-health-connect` (`readRecords` for Steps/ActiveCaloriesBurned/RestingHeartRate/ExerciseSession). Needs a new Android build to test on device; Play Store also needs Google's Health Connect declaration form approved before Android launch
 - [ ] **ngrok paid plan** — dev-client hot-reload without burning EAS builds; set up `ngrok config add-authtoken` then use `ngrok http 8081` + paste URL into Expo Dev Tools
 - [x] **Home plate quadrant UI** — completed 2026-06-20; SVG circular plate with 4 tappable quadrants, Home tab added
 - [x] **Cycle setup prompt** — first-run banner in MenstruationScreen when no cycle data set; taps through to CycleSettings
@@ -35,7 +36,7 @@
 
 ## 2. Known Issues / Watch-list
 
-- `react-native-google-fit` — Google Fit APIs sunset 2025-06-30. fetchAndroidStats() returns nulls. Migrate to `react-native-health-connect` when targeting Android seriously.
+- `react-native-health-connect` — Android health data now reads via Health Connect; requires the Health Connect app on-device (bundled with OS on Android 14+, separate Play Store install before that) and a real native build (not usable in Expo Go).
 - `expo-barcode-scanner` — deprecated/removed in SDK 51+. Replaced with `expo-camera` barcodeScannerSettings (same EAN-13/UPC-A support). Don't add it back.
 - `@react-native-google-fit/react-native-google-fit` scoped package — doesn't exist on npm. Use unscoped `react-native-google-fit`.
 - npm audit — 4+ moderate, 4+ high from transitive deps in react-native-google-fit. Deferred; disappears with Health Connect migration.
@@ -76,6 +77,8 @@
 
 | Decision | Why | Alternatives considered |
 |----------|-----|------------------------|
+| `react-native-health-connect` for Android health data | Google Fit APIs sunset June 2025; Health Connect is the current Android platform standard, actively maintained, typed API | `@kingstinct/react-native-healthkit`-style alternatives are iOS-only; no viable Google Fit replacement besides Health Connect |
+| Supabase personal access token in `.env.local` (gitignored) for CLI auth | Lets Claude run `supabase secrets set`/`functions deploy` directly instead of the user copy-pasting commands each session | User runs commands manually (more friction, chosen against per user request 2026-07-01). **Revisit at next security review — see Active TODOs** |
 | `updateUser({ email, password })` for "Create Account" | Upgrades anonymous session in-place; all user data (logs, cycle, onboarding) preserved under same user_id | signUp (creates new user, orphans anon data) |
 | Auth modal from App.tsx for onboarding sign-in | OnboardingScreen renders outside NavigationContainer; can't use `navigation.navigate` from there | Inline auth form in OnboardingScreen (coupling) |
 | `onAuthStateChange` re-checks onboarding on SIGNED_IN (non-anon) | Handles "returning user on new device" flow without requiring nav changes | Manual refresh button after sign-in |
