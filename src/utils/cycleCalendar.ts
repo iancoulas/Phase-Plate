@@ -91,10 +91,6 @@ export function generateMarkedDates(
             fontWeight: isToday ? 'bold' : 'normal',
           },
         },
-        ...(result.phase === 'menstrual' && {
-          dots: [{ key: 'menstrual', color: colors.dot }],
-          marked: true,
-        }),
       };
     } catch {
       // Skip days before lastPeriodDate

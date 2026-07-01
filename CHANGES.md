@@ -1,5 +1,35 @@
 # PhasePlate — Changes Log
 
+## 2026-07-01 — Paywall wired + theme.ts
+
+### New
+- **PaywallScreen wired into navigation** (`ProfileStackNavigator.tsx`, `ProfileScreen.tsx`, `types/index.ts`) — `Paywall` added to `ProfileStackParamList`; registered as a modal in `ProfileStackNavigator`; new SUBSCRIPTION section in Profile tab shows "Upgrade to Plus or Premium" row for free users (taps to Paywall modal) and active tier badge + "Manage Subscription" row for subscribers.
+- **`src/utils/theme.ts`** — centralised colour tokens: brand, phase swatches/backgrounds/text, subscription tiers, neutrals, status. Available for import in new screens going forward.
+
+---
+
+## 2026-07-01 — Deep linking + calendar fix + crash guard
+
+### New
+- **Deep link handler** (`App.tsx`) — email confirmation links (`com.coulascreations.phaseplate://#access_token=...`) now open the app and complete the Supabase session upgrade automatically. Handles both cold start (`getInitialURL`) and warm start (`addEventListener`). `onAuthStateChange` then re-checks the onboarding profile and dismisses the auth modal.
+- **URL scheme registered** (`app.config.js`) — `scheme: 'com.coulascreations.phaseplate'` added at the Expo top level. Android `intentFilters` added so the scheme opens the app on Android too.
+
+### Fixed
+- **Calendar blue dot** (`cycleCalendar.ts`, `MenstruationScreen.tsx`) — removed `marked: true` + `dots` which leaked the library's default blue dot on all calendar days in `markingType="custom"` mode. Logged period days now show a red `borderWidth: 2` ring via `customStyles` instead, which is visually clear alongside the phase tints.
+- **White screen on launch** (`App.tsx`) — `bootstrap()` had no error handling; if `fetchOnboardingProfile()` threw for any reason, `setAuthReady(true)` never ran and the app was permanently stuck on a blank screen. Wrapped in `try/finally` so it always unblocks.
+
+---
+
+## 2026-07-01 — Sleep time drum picker + README
+
+### Updated
+- **Sleep time picker** (`src/screens/Sleep/SleepScreen.tsx`) — replaced 15-minute increment stepper buttons with a drum/wheel picker (iOS-native scroll feel). Bedtime and wake time each show a scrollable hour column (12-hour, snaps per item) and a scrollable minute column (0-59, per-minute precision). AM/PM toggles beside each picker. Drums auto-scroll to the correct position each time the sheet opens via `resetKey`. Zero TS errors, no new dependencies.
+
+### Docs
+- **README.md** — rewrote from placeholder. Now covers: project structure, all 5 Supabase tables, auth flow, env vars, how to run/build/submit, core cycle logic, RevenueCat setup, known issues, and key architectural decisions.
+
+---
+
 ## 2026-06-30 — Sleep log v1 + cycle date calendar picker
 
 ### New

@@ -4,6 +4,7 @@ module.exports = {
     slug: 'PhasePlate',
     version: '1.0.0',
     orientation: 'portrait',
+    scheme: 'com.coulascreations.phaseplate',
     icon: './assets/icon.png',
     userInterfaceStyle: 'light',
     newArchEnabled: false,
@@ -35,6 +36,14 @@ module.exports = {
         backgroundColor: '#ffffff',
       },
       package: 'com.coulascreations.phaseplate',
+      intentFilters: [
+        {
+          action: 'VIEW',
+          autoVerify: true,
+          data: [{ scheme: 'com.coulascreations.phaseplate' }],
+          category: ['BROWSABLE', 'DEFAULT'],
+        },
+      ],
       permissions: [
         'android.permission.CAMERA',
         'android.permission.READ_EXTERNAL_STORAGE',

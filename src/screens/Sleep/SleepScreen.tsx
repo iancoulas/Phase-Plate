@@ -45,48 +45,127 @@ function parseDateLabel(dateStr: string): string {
 }
 
 const TEAL = '#2C5364';
+const DRUM_H = 50;
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+// ─── Drum picker ──────────────────────────────────────────────────────────────
 
-function TimeStepper({
-  label, hour, minute,
-  onHourDec, onHourInc, onMinDec, onMinInc,
-}: {
-  label: string; hour: number; minute: number;
-  onHourDec: () => void; onHourInc: () => void;
-  onMinDec: () => void;  onMinInc: () => void;
+function DrumPicker({ count, value, onChange, format, resetKey }: {
+  count: number;
+  value: number;
+  onChange: (i: number) => void;
+  format: (i: number) => string;
+  resetKey: number;
 }) {
+  const ref = useRef<ScrollView>(null);
+
+  // Scroll to current value when sheet opens (resetKey increments on each open)
+  useEffect(() => {
+    const t = setTimeout(() => {
+      ref.current?.scrollTo({ y: value * DRUM_H, animated: false });
+    }, 80);
+    return () => clearTimeout(t);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
+
+  function onScrollEnd(e: any) {
+    const idx = Math.round(e.nativeEvent.contentOffset.y / DRUM_H);
+    onChange(Math.max(0, Math.min(count - 1, idx)));
+  }
+
   return (
-    <View style={ts.row}>
-      <Text style={ts.label}>{label}</Text>
-      <View style={ts.controls}>
-        <View style={ts.unit}>
-          <TouchableOpacity style={ts.btn} onPress={onHourDec}><Text style={ts.btnText}>−</Text></TouchableOpacity>
-          <Text style={ts.val}>{String(hour % 12 || 12).padStart(2, '0')}</Text>
-          <TouchableOpacity style={ts.btn} onPress={onHourInc}><Text style={ts.btnText}>+</Text></TouchableOpacity>
+    <View style={dp.container}>
+      <View style={dp.highlight} pointerEvents="none" />
+      <ScrollView
+        ref={ref}
+        snapToInterval={DRUM_H}
+        decelerationRate="fast"
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingVertical: DRUM_H }}
+        onMomentumScrollEnd={onScrollEnd}
+        onScrollEndDrag={onScrollEnd}
+        bounces={false}
+      >
+        {Array.from({ length: count }, (_, i) => (
+          <View key={i} style={dp.item}>
+            <Text style={[dp.text, i === value && dp.textSelected]}>
+              {format(i)}
+            </Text>
+          </View>
+        ))}
+      </ScrollView>
+    </View>
+  );
+}
+
+const dp = StyleSheet.create({
+  container:    { height: DRUM_H * 3, overflow: 'hidden', width: 64 },
+  highlight:    { position: 'absolute', top: DRUM_H, left: 2, right: 2, height: DRUM_H, backgroundColor: '#E8F0F5', borderRadius: 10 },
+  item:         { height: DRUM_H, justifyContent: 'center', alignItems: 'center' },
+  text:         { fontSize: 24, fontWeight: '400', color: '#ccc' },
+  textSelected: { fontSize: 26, fontWeight: '700', color: TEAL },
+});
+
+// ─── Clock picker ─────────────────────────────────────────────────────────────
+
+function ClockPicker({ label, hour, minute, onHourChange, onMinuteChange, resetKey }: {
+  label: string;
+  hour: number;       // 0-23
+  minute: number;     // 0-59
+  onHourChange: (h: number) => void;
+  onMinuteChange: (m: number) => void;
+  resetKey: number;
+}) {
+  const isAM = hour < 12;
+  const drumHourIdx = hour % 12;   // 0 → "12", 1 → "1", … 11 → "11"
+
+  return (
+    <View style={cp.container}>
+      <Text style={cp.label}>{label}</Text>
+      <View style={cp.row}>
+        <DrumPicker
+          count={12}
+          value={drumHourIdx}
+          onChange={(idx) => onHourChange(isAM ? idx : idx + 12)}
+          format={(i) => String(i === 0 ? 12 : i).padStart(2, '0')}
+          resetKey={resetKey}
+        />
+        <Text style={cp.colon}>:</Text>
+        <DrumPicker
+          count={60}
+          value={minute}
+          onChange={onMinuteChange}
+          format={(i) => String(i).padStart(2, '0')}
+          resetKey={resetKey}
+        />
+        <View style={cp.ampmCol}>
+          <TouchableOpacity
+            style={[cp.ampmBtn, isAM && cp.ampmBtnActive]}
+            onPress={() => { if (!isAM) onHourChange(hour - 12); }}
+          >
+            <Text style={[cp.ampmText, isAM && cp.ampmTextActive]}>AM</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[cp.ampmBtn, !isAM && cp.ampmBtnActive]}
+            onPress={() => { if (isAM) onHourChange(hour + 12); }}
+          >
+            <Text style={[cp.ampmText, !isAM && cp.ampmTextActive]}>PM</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={ts.colon}>:</Text>
-        <View style={ts.unit}>
-          <TouchableOpacity style={ts.btn} onPress={onMinDec}><Text style={ts.btnText}>−</Text></TouchableOpacity>
-          <Text style={ts.val}>{String(minute).padStart(2, '0')}</Text>
-          <TouchableOpacity style={ts.btn} onPress={onMinInc}><Text style={ts.btnText}>+</Text></TouchableOpacity>
-        </View>
-        <Text style={ts.ampm}>{hour >= 12 ? 'PM' : 'AM'}</Text>
       </View>
     </View>
   );
 }
 
-const ts = StyleSheet.create({
-  row:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
-  label:    { fontSize: 15, color: '#1a1a1a', fontWeight: '500' },
-  controls: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  unit:     { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  btn:      { width: 30, height: 30, borderRadius: 15, backgroundColor: '#E8F0F5', justifyContent: 'center', alignItems: 'center' },
-  btnText:  { fontSize: 18, color: TEAL, fontWeight: '600', lineHeight: 22 },
-  val:      { fontSize: 18, fontWeight: '700', color: '#1a1a1a', minWidth: 28, textAlign: 'center' },
-  colon:    { fontSize: 18, fontWeight: '700', color: '#1a1a1a' },
-  ampm:     { fontSize: 13, fontWeight: '600', color: '#666', marginLeft: 2, minWidth: 26 },
+const cp = StyleSheet.create({
+  container:      { paddingVertical: 8 },
+  label:          { fontSize: 15, fontWeight: '600', color: '#555', marginBottom: 6 },
+  row:            { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 4 },
+  colon:          { fontSize: 28, fontWeight: '700', color: '#1a1a1a', marginHorizontal: 2, marginTop: -6 },
+  ampmCol:        { gap: 6, marginLeft: 12 },
+  ampmBtn:        { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8, borderWidth: 1.5, borderColor: '#e0e0e0', minWidth: 48, alignItems: 'center' },
+  ampmBtnActive:  { borderColor: TEAL, backgroundColor: '#E8F0F5' },
+  ampmText:       { fontSize: 13, fontWeight: '600', color: '#ccc' },
+  ampmTextActive: { color: TEAL },
 });
 
 const ENERGY_OPTIONS: { key: EnergyLevel; label: string }[] = [
@@ -105,6 +184,8 @@ export default function SleepScreen() {
   const [loading, setLoading] = useState(true);
   const [sheetVisible, setSheetVisible] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [sheetResetKey, setSheetResetKey] = useState(0);
 
   // Sheet form state — defaults: 10 PM bedtime, 6 AM wake
   const [bedH, setBedH]   = useState(22);
@@ -130,7 +211,6 @@ export default function SleepScreen() {
   const todayLog = logs.find(l => l.log_date === today) ?? null;
 
   function openSheet() {
-    // Pre-fill from today's log if it exists
     if (todayLog) {
       const [bh, bm] = todayLog.bedtime?.split(':').map(Number) ?? [22, 0];
       const [wh, wm] = todayLog.wake_time?.split(':').map(Number) ?? [6, 0];
@@ -142,6 +222,7 @@ export default function SleepScreen() {
       setBedH(22); setBedM(0); setWakeH(6); setWakeM(0);
       setQuality(null); setEnergy(null); setNotes('');
     }
+    setSheetResetKey(k => k + 1);
     setSheetVisible(true);
     Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true }).start();
   }
@@ -152,10 +233,11 @@ export default function SleepScreen() {
 
   async function handleSave() {
     setSaving(true);
+    setSaveError(null);
     const bedtime   = `${String(bedH).padStart(2, '0')}:${String(bedM).padStart(2, '0')}`;
     const wake_time = `${String(wakeH).padStart(2, '0')}:${String(wakeM).padStart(2, '0')}`;
     const sleep_hours = calcSleepHours(bedH, bedM, wakeH, wakeM);
-    await saveSleepLog({
+    const result = await saveSleepLog({
       log_date: today,
       bedtime,
       wake_time,
@@ -165,6 +247,10 @@ export default function SleepScreen() {
       notes:        notes.trim() || undefined,
     });
     setSaving(false);
+    if (!result) {
+      setSaveError('Could not save — check your connection and try again.');
+      return;
+    }
     closeSheet();
     loadLogs();
   }
@@ -254,22 +340,20 @@ export default function SleepScreen() {
               <Text style={styles.sheetTitle}>Log Sleep</Text>
 
               <View style={styles.sheetSection}>
-                <TimeStepper
+                <ClockPicker
                   label="Bedtime"
                   hour={bedH} minute={bedM}
-                  onHourDec={() => setBedH(h => (h + 23) % 24)}
-                  onHourInc={() => setBedH(h => (h + 1)  % 24)}
-                  onMinDec={() =>  setBedM(m => (m + 45) % 60)}
-                  onMinInc={() =>  setBedM(m => (m + 15) % 60)}
+                  onHourChange={setBedH}
+                  onMinuteChange={setBedM}
+                  resetKey={sheetResetKey}
                 />
                 <View style={styles.divider} />
-                <TimeStepper
+                <ClockPicker
                   label="Wake time"
                   hour={wakeH} minute={wakeM}
-                  onHourDec={() => setWakeH(h => (h + 23) % 24)}
-                  onHourInc={() => setWakeH(h => (h + 1)  % 24)}
-                  onMinDec={() =>  setWakeM(m => (m + 45) % 60)}
-                  onMinInc={() =>  setWakeM(m => (m + 15) % 60)}
+                  onHourChange={setWakeH}
+                  onMinuteChange={setWakeM}
+                  resetKey={sheetResetKey}
                 />
                 <Text style={styles.sleepHoursNote}>
                   {calcSleepHours(bedH, bedM, wakeH, wakeM)} hours of sleep
@@ -321,6 +405,10 @@ export default function SleepScreen() {
                 />
               </View>
 
+              {saveError && (
+                <Text style={styles.saveError}>{saveError}</Text>
+              )}
+
               <TouchableOpacity
                 style={[styles.saveBtn, saving && styles.saveBtnDisabled]}
                 onPress={handleSave}
@@ -355,13 +443,13 @@ const styles = StyleSheet.create({
   logBtn:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: TEAL, borderRadius: 10, paddingVertical: 12 },
   logBtnText:  { color: '#fff', fontWeight: '700', fontSize: 15 },
 
-  historyCard:  { backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden' },
-  historyRow:   { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 13 },
+  historyCard:    { backgroundColor: '#fff', borderRadius: 14, overflow: 'hidden' },
+  historyRow:     { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 13 },
   historyDivider: { borderBottomWidth: 1, borderBottomColor: '#f5f5f5' },
-  historyDate:  { fontSize: 14, fontWeight: '600', color: '#1a1a1a', flex: 1 },
-  historyRight: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  historyHours: { fontSize: 14, fontWeight: '700', color: TEAL },
-  historyTime:  { fontSize: 13, color: '#888' },
+  historyDate:    { fontSize: 14, fontWeight: '600', color: '#1a1a1a', flex: 1 },
+  historyRight:   { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  historyHours:   { fontSize: 14, fontWeight: '700', color: TEAL },
+  historyTime:    { fontSize: 13, color: '#888' },
   historyQuality: { fontSize: 13, color: '#f4a300', letterSpacing: -1 },
 
   // Sheet
@@ -370,8 +458,8 @@ const styles = StyleSheet.create({
   handle:      { width: 40, height: 4, borderRadius: 2, backgroundColor: '#ddd', alignSelf: 'center', marginTop: 10, marginBottom: 6 },
   sheetTitle:  { fontSize: 20, fontWeight: '700', color: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 14 },
   sheetSection:{ backgroundColor: '#f8f8f8', borderRadius: 12, marginHorizontal: 16, marginBottom: 4, padding: 14 },
-  divider:     { height: 1, backgroundColor: '#eee', marginVertical: 4 },
-  sleepHoursNote: { fontSize: 13, color: TEAL, fontWeight: '600', textAlign: 'center', marginTop: 8 },
+  divider:     { height: 1, backgroundColor: '#eee', marginVertical: 10 },
+  sleepHoursNote: { fontSize: 13, color: TEAL, fontWeight: '600', textAlign: 'center', marginTop: 10 },
   fieldLabel:  { fontSize: 13, fontWeight: '600', color: '#555', paddingHorizontal: 20, paddingTop: 14, paddingBottom: 6 },
   optionRow:   { flexDirection: 'row', gap: 10, justifyContent: 'center' },
   numberBtn:   { width: 44, height: 44, borderRadius: 22, borderWidth: 1.5, borderColor: '#ddd', alignItems: 'center', justifyContent: 'center' },
@@ -385,6 +473,7 @@ const styles = StyleSheet.create({
   chipText:    { fontSize: 14, color: '#555' },
   chipTextSelected: { color: TEAL, fontWeight: '600' },
   textArea:    { fontSize: 15, color: '#1a1a1a', minHeight: 80 },
+  saveError:   { marginHorizontal: 16, marginTop: 8, fontSize: 13, color: '#c0392b', textAlign: 'center' },
   saveBtn:     { margin: 16, backgroundColor: TEAL, borderRadius: 12, paddingVertical: 15, alignItems: 'center' },
   saveBtnDisabled: { opacity: 0.6 },
   saveBtnText: { color: '#fff', fontWeight: '700', fontSize: 16 },

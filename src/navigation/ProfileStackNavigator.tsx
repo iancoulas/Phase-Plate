@@ -7,6 +7,7 @@ import NotificationSettingsScreen from '../screens/NotificationSettings/Notifica
 import OnboardingScreen from '../screens/Onboarding/OnboardingScreen';
 import CycleSettingsScreen from '../screens/Profile/CycleSettingsScreen';
 import AuthScreen from '../screens/Auth/AuthScreen';
+import PaywallScreen from '../screens/Paywall/PaywallScreen';
 import { ProfileStackParamList } from '../types';
 
 const Stack = createStackNavigator<ProfileStackParamList>();
@@ -19,6 +20,11 @@ function OnboardingWithBack() {
 function AuthWithBack() {
   const navigation = useNavigation();
   return <AuthScreen onBack={() => navigation.goBack()} />;
+}
+
+function PaywallWithBack() {
+  const navigation = useNavigation();
+  return <PaywallScreen onClose={() => navigation.goBack()} />;
 }
 
 export default function ProfileStackNavigator() {
@@ -35,6 +41,11 @@ export default function ProfileStackNavigator() {
       <Stack.Screen
         name="Auth"
         component={AuthWithBack}
+        options={{ presentation: 'modal' } as object}
+      />
+      <Stack.Screen
+        name="Paywall"
+        component={PaywallWithBack}
         options={{ presentation: 'modal' } as object}
       />
     </Stack.Navigator>

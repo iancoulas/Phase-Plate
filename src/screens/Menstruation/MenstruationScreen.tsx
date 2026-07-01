@@ -89,14 +89,25 @@ export default function MenstruationScreen() {
 
   const markedDates = useMemo(() => {
     const base = generateMarkedDates(viewedMonth.year, viewedMonth.month, cycleParams);
-    // Overlay actual logged period days as red dots
+    // Overlay actual logged period days with a red border
     for (const log of monthLogs) {
       if (log.flow_level && log.flow_level !== 'none') {
         const existing = base[log.log_date] ?? {};
         base[log.log_date] = {
           ...existing,
-          marked: true,
-          dots: [{ key: 'logged', color: '#E74C3C' }],
+          customStyles: {
+            ...existing.customStyles,
+            container: {
+              ...existing.customStyles?.container,
+              borderWidth: 2,
+              borderColor: '#E74C3C',
+              borderRadius: 16,
+            },
+            text: {
+              ...existing.customStyles?.text,
+              fontWeight: 'bold',
+            },
+          },
         };
       }
     }

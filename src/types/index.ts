@@ -15,4 +15,5 @@ export type ProfileStackParamList = {
   Onboarding: undefined;
   CycleSettings: undefined;
   Auth: undefined;
+  Paywall: undefined;
 };

@@ -8,6 +8,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { fetchOnboardingProfile, authSignOut } from '../../services/supabase';
 import { useCycle } from '../../contexts/CycleContext';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSubscription } from '../../contexts/SubscriptionContext';
 import { calculateCyclePhase } from '../../utils/cycleCalculator';
 import { ProfileStackParamList } from '../../types';
 
@@ -36,6 +37,7 @@ export default function ProfileScreen() {
   const navigation = useNavigation<Nav>();
   const { lastPeriodDate, cycleLength, periodLength, isDefaultData } = useCycle();
   const { user, isAnonymous, loading: authLoading } = useAuth();
+  const { tier } = useSubscription();
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
 
@@ -100,6 +102,36 @@ export default function ProfileScreen() {
           />
         </View>
 
+        <Text style={styles.sectionLabel}>SUBSCRIPTION</Text>
+        <View style={styles.card}>
+          {tier === 'free' ? (
+            <Row
+              title="Upgrade to Plus or Premium"
+              subtitle="Unlock AI food logging, barcode scanner & more"
+              onPress={() => navigation.navigate('Paywall')}
+            />
+          ) : (
+            <>
+              <View style={[styles.row, { borderBottomWidth: 1, borderBottomColor: '#f5f5f5' }]}>
+                <View style={styles.rowText}>
+                  <Text style={styles.rowTitle}>
+                    {tier === 'premium' ? 'Premium' : 'Plus'} — Active
+                  </Text>
+                  <Text style={styles.rowSub}>Thanks for subscribing!</Text>
+                </View>
+                <View style={[styles.tierBadge, { backgroundColor: tier === 'premium' ? '#9B59B6' : '#8B3A5A' }]}>
+                  <Text style={styles.tierBadgeText}>{tier === 'premium' ? 'PREMIUM' : 'PLUS'}</Text>
+                </View>
+              </View>
+              <Row
+                title="Manage Subscription"
+                subtitle="View or cancel in App Store settings"
+                onPress={() => navigation.navigate('Paywall')}
+              />
+            </>
+          )}
+        </View>
+
         <Text style={styles.sectionLabel}>ACCOUNT</Text>
         <View style={styles.card}>
           {authLoading ? (
@@ -161,4 +193,6 @@ const styles = StyleSheet.create({
   rowText: { flex: 1 },
   rowTitle: { fontSize: 16, color: '#1a1a1a', fontWeight: '500' },
   rowSub: { fontSize: 13, color: '#888', marginTop: 2 },
+  tierBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
+  tierBadgeText: { fontSize: 11, fontWeight: '700', color: '#fff', letterSpacing: 0.5 },
 });

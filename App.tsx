@@ -3,6 +3,7 @@ import { Modal } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as Linking from 'expo-linking';
 
 import { supabase, ensureAnonSession, fetchOnboardingProfile } from './src/services/supabase';
 import { CycleProvider } from './src/contexts/CycleContext';
@@ -23,17 +24,44 @@ export default function App() {
     registerHealthBackgroundSync();
 
     async function bootstrap() {
-      await ensureAnonSession();
-      const profile = await fetchOnboardingProfile();
-      setShowOnboarding(!profile);
-      setAuthReady(true);
+      try {
+        await ensureAnonSession();
+        const profile = await fetchOnboardingProfile();
+        setShowOnboarding(!profile);
+      } catch (err) {
+        console.warn('[App] bootstrap error:', err);
+        setShowOnboarding(false);
+      } finally {
+        setAuthReady(true);
+      }
     }
 
     bootstrap();
 
+    // Handle Supabase auth deep links (email confirmation / change email).
+    // Supabase redirects to com.coulascreations.phaseplate://#access_token=...&refresh_token=...
+    // We parse the hash fragment and hand the tokens directly to the Supabase client.
+    async function handleAuthUrl(url: string) {
+      const hash = url.split('#')[1];
+      if (!hash) return;
+      const params = Object.fromEntries(new URLSearchParams(hash));
+      if (params.access_token && params.refresh_token) {
+        const { error } = await supabase.auth.setSession({
+          access_token: params.access_token,
+          refresh_token: params.refresh_token,
+        });
+        if (error) console.warn('[App] deep link setSession error:', error.message);
+      }
+    }
+
+    // Cold start: app opened by tapping the email link
+    Linking.getInitialURL().then(url => { if (url) handleAuthUrl(url); });
+
+    // Warm start: link tapped while app is already running
+    const linkSub = Linking.addEventListener('url', ({ url }) => handleAuthUrl(url));
+
     // When a real (non-anonymous) account signs in, re-check onboarding for that account.
-    // This handles "returning user on new device": they sign in and their existing
-    // onboarding profile loads, bypassing the questionnaire.
+    // Covers both the "returning user on new device" flow and post-email-confirmation.
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === 'SIGNED_IN' && session && !session.user.is_anonymous) {
         const profile = await fetchOnboardingProfile();
@@ -42,7 +70,10 @@ export default function App() {
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      linkSub.remove();
+    };
   }, []);
 
   if (!authReady) return null;
